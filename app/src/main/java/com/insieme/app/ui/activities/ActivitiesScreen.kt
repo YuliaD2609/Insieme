@@ -5,23 +5,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.insieme.app.data.model.Activity
 import com.insieme.app.data.model.ActivityStatus
 import com.insieme.app.ui.components.FlowerIcon
@@ -38,23 +34,29 @@ fun ActivitiesScreen(
     val spaceId by viewModel.spaceId.collectAsState()
     val userId by viewModel.userId.collectAsState()
     val groupSize by viewModel.groupSize.collectAsState()
-    val participantIds by viewModel.participantIds.collectAsState()
     val userImages by viewModel.userImages.collectAsState()
     val idToName by viewModel.idToName.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var activityToEdit by remember { mutableStateOf<Activity?>(null) }
+    var selectedTabIndex by remember { mutableStateOf(0) } // 0 = Casa, 1 = Fuori
     
     val deepGreen = Color(0xFFA5D6A7)
+    val locations = listOf("Casa", "Fuori")
 
-    val todoActivities = activities.filter { it.status == ActivityStatus.TODO }
-    val doneActivities = activities.filter { it.status == ActivityStatus.DONE }
+    val filteredActivities = activities.filter { 
+        if (selectedTabIndex == 0) it.isAtHome else !it.isAtHome 
+    }
+    
+    val todoActivities = filteredActivities.filter { it.status == ActivityStatus.TODO }
+    val doneActivities = filteredActivities.filter { it.status == ActivityStatus.DONE }
 
     if (showCreateDialog) {
         ActivityDialog(
             onDismiss = { showCreateDialog = false },
             onSave = { newActivity ->
-                viewModel.addActivity(newActivity)
+                // Assicuriamoci che il nuovo elemento abbia il luogo corretto basato sul tab selezionato
+                viewModel.addActivity(newActivity.copy(isAtHome = selectedTabIndex == 0))
                 showCreateDialog = false
             }
         )
@@ -89,21 +91,24 @@ fun ActivitiesScreen(
             }
 
             if (spaceId.isNotBlank()) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    containerColor = Color.White,
+                    contentColor = deepGreen,
+                    divider = {},
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                            color = deepGreen
+                        )
+                    }
                 ) {
-                    items(participantIds.toList()) { id ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            ParticipantAvatar(idToName[id] ?: "Utente", userImages[id], size = 48.dp)
-                            Text(
-                                if (id == userId) "Tu" else (idToName[id]?.take(8) ?: "Utente"),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
+                    locations.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index },
+                            text = { Text(title, fontWeight = FontWeight.Bold) }
+                        )
                     }
                 }
             }
@@ -120,7 +125,13 @@ fun ActivitiesScreen(
                         )
                     }
                 } else {
-                    if (todoActivities.isNotEmpty()) {
+                    if (todoActivities.isEmpty() && doneActivities.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                                Text("Nessuna attività qui...", color = Color.LightGray)
+                            }
+                        }
+                    } else {
                         items(todoActivities, key = { it.id }) { activity ->
                             ActivityCard(
                                 activity = activity,
@@ -135,15 +146,15 @@ fun ActivitiesScreen(
                                 onEdit = { activityToEdit = activity }
                             )
                         }
-                    }
 
-                    if (doneActivities.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text("Già fatte", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray))
-                        }
-                        items(doneActivities, key = { it.id }) { activity ->
-                            DoneActivityCard(activity, deepGreen) { viewModel.updateActivity(activity.copy(status = ActivityStatus.TODO)) }
+                        if (doneActivities.isNotEmpty()) {
+                            item {
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text("Già fatte", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray))
+                            }
+                            items(doneActivities, key = { it.id }) { activity ->
+                                DoneActivityCard(activity, deepGreen) { viewModel.updateActivity(activity.copy(status = ActivityStatus.TODO)) }
+                            }
                         }
                     }
                 }
@@ -233,9 +244,9 @@ fun ActivityCard(
 }
 
 @Composable
-fun ParticipantAvatar(name: String, imageUrl: String?, size: androidx.compose.ui.unit.Dp = 28.dp) {
+fun ParticipantAvatar(name: String, imageUrl: String?) {
     Surface(
-        modifier = Modifier.size(size).offset(x = 0.dp).clip(CircleShape),
+        modifier = Modifier.size(28.dp).offset(x = 0.dp).clip(CircleShape),
         color = Color.LightGray.copy(alpha = 0.2f),
         border = androidx.compose.foundation.BorderStroke(2.dp, Color.White)
     ) {
@@ -243,7 +254,7 @@ fun ParticipantAvatar(name: String, imageUrl: String?, size: androidx.compose.ui
             AsyncImage(model = imageUrl, contentDescription = name, contentScale = ContentScale.Crop)
         } else {
             Box(contentAlignment = Alignment.Center) {
-                Text(name.take(1).uppercase(), fontSize = (size.value / 2.5).sp, fontWeight = FontWeight.Bold)
+                Text(name.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
