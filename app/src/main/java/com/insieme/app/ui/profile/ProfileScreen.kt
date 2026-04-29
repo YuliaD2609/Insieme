@@ -284,7 +284,7 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                         }
                         
                         OutlinedButton(
-                            onClick = { viewModel.setSpaceId("") }, 
+                            onClick = { viewModel.logout() }, 
                             modifier = Modifier.weight(0.8f), 
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = yellowColor.copy(alpha = 0.6f))

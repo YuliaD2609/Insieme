@@ -63,22 +63,31 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
 
     val mediaItems = _spaceId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList())
-        else repository!!.getMediaItems()
+        else {
+            val repo = repository ?: FirestoreRepositoryImpl(db, id)
+            repo.getMediaItems()
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val games = _spaceId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList())
-        else repository!!.getGames()
+        else {
+            val repo = repository ?: FirestoreRepositoryImpl(db, id)
+            repo.getGames()
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sharedWishlist = _spaceId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList())
-        else repository!!.getWishlist()
+        else {
+            val repo = repository ?: FirestoreRepositoryImpl(db, id)
+            repo.getWishlist()
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allParticipantNames = activities.map { list ->
         list.flatMap { it.participants }.toSet() + _currentUserId.value
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf("Tu"))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf(_currentUserId.value))
 
     val groupSize = allParticipantNames.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
 
@@ -93,6 +102,7 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
                         } ?: emptyMap()
                         _userImages.value = map
                     }
+                updateUserProfile() // Ensure cloud is updated with local name/photo on start
             }
         }.launchIn(viewModelScope)
     }
@@ -104,8 +114,9 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setCurrentUserId(name: String) {
-        _currentUserId.value = name
-        prefs.edit().putString("user_id", name).apply()
+        val trimmedName = name.trim().ifBlank { "Tu" }
+        _currentUserId.value = trimmedName
+        prefs.edit().putString("user_id", trimmedName).apply()
         updateUserProfile()
     }
 
@@ -119,7 +130,7 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         val id = _spaceId.value
         val name = _currentUserId.value
         val photo = _profileImage.value
-        if (id.isNotBlank() && name.isNotBlank()) {
+        if (id.isNotBlank() && name.isNotBlank() && name != "Tu") {
             viewModelScope.launch {
                 db.collection("spaces").document(id).collection("users").document(name)
                     .set(mapOf("name" to name, "photoUrl" to photo))
@@ -160,6 +171,11 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun logout() {
+        _spaceId.value = ""
+        prefs.edit().remove("space_id").apply()
+    }
+
     fun clearError() { _errorMessage.value = null }
     fun setSortOrder(order: SortOrder) { _sortOrder.value = order }
 
@@ -174,33 +190,33 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     fun markActivityAsDone(activity: Activity) { viewModelScope.launch { repository?.updateActivity(activity.copy(status = ActivityStatus.DONE)) } }
 
     // Media
-    fun addMediaItem(item: MediaItem) { viewModelScope.launch { repository?.addMediaItem(item.copy(creatorId = _currentUserId.value)) } }
-    fun updateMediaItem(item: MediaItem) { viewModelScope.launch { repository?.updateMediaItem(item) } }
-    fun deleteMediaItem(id: String) { viewModelScope.launch { repository?.deleteMediaItem(id) } }
+    fun addMediaItem(item: MediaItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addMediaItem(item.copy(creatorId = _currentUserId.value)) } }
+    fun updateMediaItem(item: MediaItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateMediaItem(item) } }
+    fun deleteMediaItem(id: String) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).deleteMediaItem(id) } }
     fun toggleMediaStatus(item: MediaItem) {
         val newStatus = if (item.status == ActivityStatus.TODO) ActivityStatus.DONE else ActivityStatus.TODO
-        viewModelScope.launch { repository?.updateMediaItem(item.copy(status = newStatus)) }
+        viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateMediaItem(item.copy(status = newStatus)) }
     }
     fun toggleMediaParticipation(item: MediaItem) {
         val newList = if (item.participants.contains(_currentUserId.value)) item.participants - _currentUserId.value else item.participants + _currentUserId.value
-        viewModelScope.launch { repository?.updateMediaItem(item.copy(participants = newList)) }
+        viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateMediaItem(item.copy(participants = newList)) }
     }
 
     // Games
-    fun addGame(item: GameItem) { viewModelScope.launch { repository?.addGame(item.copy(creatorId = _currentUserId.value)) } }
-    fun updateGame(item: GameItem) { viewModelScope.launch { repository?.updateGame(item) } }
-    fun deleteGame(id: String) { viewModelScope.launch { repository?.deleteGame(id) } }
+    fun addGame(item: GameItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addGame(item.copy(creatorId = _currentUserId.value)) } }
+    fun updateGame(item: GameItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateGame(item) } }
+    fun deleteGame(id: String) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).deleteGame(id) } }
     fun toggleGameStatus(item: GameItem) {
         val newStatus = if (item.status == ActivityStatus.TODO) ActivityStatus.DONE else ActivityStatus.TODO
-        viewModelScope.launch { repository?.updateGame(item.copy(status = newStatus)) }
+        viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateGame(item.copy(status = newStatus)) }
     }
     fun toggleGameParticipation(item: GameItem) {
         val newList = if (item.participants.contains(_currentUserId.value)) item.participants - _currentUserId.value else item.participants + _currentUserId.value
-        viewModelScope.launch { repository?.updateGame(item.copy(participants = newList)) }
+        viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateGame(item.copy(participants = newList)) }
     }
 
     // Wishlist
-    fun addWishlistItem(title: String, link: String?) { viewModelScope.launch { repository?.addWishlistItem(WishlistItem(title = title, link = link, ownerId = _currentUserId.value)) } }
-    fun updateWishlistItem(id: String, title: String, link: String?) { viewModelScope.launch { repository?.updateWishlistItem(WishlistItem(id = id, title = title, link = link, ownerId = _currentUserId.value)) } }
-    fun deleteWishlistItem(id: String) { viewModelScope.launch { repository?.deleteWishlistItem(id) } }
+    fun addWishlistItem(title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addWishlistItem(WishlistItem(title = title, link = link, ownerId = _currentUserId.value)) } }
+    fun updateWishlistItem(id: String, title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateWishlistItem(WishlistItem(id = id, title = title, link = link, ownerId = _currentUserId.value)) } }
+    fun deleteWishlistItem(id: String) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).deleteWishlistItem(id) } }
 }
