@@ -50,7 +50,7 @@ object LinkScraper {
                 }
             }
             
-            ScrapedInfo(title.trim(), imageUrl.trim())
+            ScrapedInfo(title?.trim() ?: "Desiderio", imageUrl?.trim())
         } catch (e: Exception) {
             e.printStackTrace()
             ScrapedInfo(null, null)
