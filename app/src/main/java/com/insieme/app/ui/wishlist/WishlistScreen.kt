@@ -48,8 +48,8 @@ fun WishlistScreen(
     var itemToEdit by remember { mutableStateOf<WishlistItem?>(null) }
     var zoomImageUrl by remember { mutableStateOf<String?>(null) }
 
-    val pastelPink = Color(0xFFFCE4EC)
-    val deepPink = Color(0xFFF06292)
+    val pastelPink = Color(0xFFFFF5F8)
+    val deepPink = Color(0xFFF48FB1)
 
     val participantList = participants.toList().sortedBy { if (it == currentUserId) 0 else 1 }
     

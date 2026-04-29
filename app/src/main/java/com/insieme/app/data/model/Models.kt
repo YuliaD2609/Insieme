@@ -27,7 +27,8 @@ data class MediaItem(
     val status: ActivityStatus = ActivityStatus.TODO,
     val creatorId: String = "",
     @get:PropertyName("converted") @set:PropertyName("converted")
-    var isConverted: Boolean = false
+    var isConverted: Boolean = false,
+    val participants: List<String> = emptyList()
 )
 
 enum class MediaType {
@@ -38,7 +39,8 @@ data class GameItem(
     val id: String = "",
     val title: String = "",
     val status: ActivityStatus = ActivityStatus.TODO,
-    val creatorId: String = ""
+    val creatorId: String = "",
+    val participants: List<String> = emptyList()
 )
 
 data class WishlistItem(

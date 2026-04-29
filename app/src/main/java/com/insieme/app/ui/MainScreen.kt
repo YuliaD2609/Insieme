@@ -35,23 +35,23 @@ sealed class Screen(
 ) {
     object Activities : Screen(
         "activities", "Andiamo!", Icons.Default.Favorite, 
-        Color(0xFF4CAF50), Color(0xFFF1F8E9) // Ultra-Pastel Green
+        Color(0xFFA5D6A7), Color(0xFFF9FBF9) // Ultra-Pastel Green
     )
     object Media : Screen(
         "media", "Vedere", Icons.Default.PlayArrow, 
-        Color(0xFF795548), Color(0xFFFDF5E6) // Ultra-Pastel Beige (Old Lace)
+        Color(0xFFBCB1A1), Color(0xFFFDFCFB) // Ultra-Pastel Beige
     )
     object Games : Screen(
         "games", "Giochi", Icons.Default.Star, 
-        Color(0xFF2196F3), Color(0xFFE3F2FD) // Ultra-Pastel Blue
+        Color(0xFF90CAF9), Color(0xFFF0F7FF) // Ultra-Pastel Blue
     )
     object Wishlist : Screen(
         "wishlist", "Desideri", Icons.Default.List, 
-        Color(0xFFE91E63), Color(0xFFFCE4EC) // Ultra-Pastel Pink
+        Color(0xFFF48FB1), Color(0xFFFFF5F8) // Ultra-Pastel Pink
     )
     object Profile : Screen(
         "profile", "Profilo", Icons.Default.Person, 
-        Color(0xFFFFB300), Color(0xFFFFFDE7) // Ultra-Pastel Yellow
+        Color(0xFFFFE082), Color(0xFFFFFFF0) // Ultra-Pastel Yellow
     )
 }
 
@@ -109,9 +109,9 @@ fun MainScreen(viewModel: InsiemeViewModel = viewModel()) {
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = screen.color,
                             selectedTextColor = screen.color,
-                            indicatorColor = screen.color.copy(alpha = 0.12f),
-                            unselectedIconColor = Color.Gray.copy(alpha = 0.4f),
-                            unselectedTextColor = Color.Gray.copy(alpha = 0.4f)
+                            indicatorColor = screen.color.copy(alpha = 0.15f),
+                            unselectedIconColor = Color.LightGray.copy(alpha = 0.5f),
+                            unselectedTextColor = Color.LightGray.copy(alpha = 0.5f)
                         )
                     )
                 }

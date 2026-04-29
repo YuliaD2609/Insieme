@@ -47,8 +47,8 @@ fun ActivitiesScreen(
     val currentSort by viewModel.sortOrder.collectAsState()
     val userImages by viewModel.userImages.collectAsState()
 
-    val pastelGreen = Color(0xFFF1F8E9)
-    val deepGreen = Color(0xFF81C784)
+    val pastelGreen = Color(0xFFF9FBF9)
+    val deepGreen = Color(0xFFA5D6A7)
 
     val todoActivities = activities.filter { it.status == ActivityStatus.TODO }
     val doneActivities = activities.filter { it.status == ActivityStatus.DONE }

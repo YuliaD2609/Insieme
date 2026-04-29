@@ -69,8 +69,8 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
     val members by viewModel.allParticipantNames.collectAsState()
     var inputDigits by remember { mutableStateOf("") }
     
-    val yellowColor = Color(0xFFFFB300)
-    val pastelYellow = Color(0xFFFFFDE7)
+    val yellowColor = Color(0xFFFFE082)
+    val pastelYellow = Color(0xFFFFFFF0)
     val context = LocalContext.current
 
     val galleryLauncher = rememberLauncherForActivityResult(

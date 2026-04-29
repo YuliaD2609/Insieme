@@ -42,7 +42,7 @@ fun GroupWarningCard(
             Text(
                 description, 
                 textAlign = TextAlign.Center, 
-                color = Color.Gray,
+                color = Color.DarkGray.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(modifier = Modifier.height(20.dp))

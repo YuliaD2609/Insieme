@@ -161,6 +161,10 @@ class InsiemeViewModel : ViewModel() {
         val newStatus = if (item.status == ActivityStatus.TODO) ActivityStatus.DONE else ActivityStatus.TODO
         viewModelScope.launch { repository?.updateMediaItem(item.copy(status = newStatus)) }
     }
+    fun toggleMediaParticipation(item: MediaItem) {
+        val newList = if (item.participants.contains(_currentUserId.value)) item.participants - _currentUserId.value else item.participants + _currentUserId.value
+        viewModelScope.launch { repository?.updateMediaItem(item.copy(participants = newList)) }
+    }
 
     // Games
     fun addGame(item: GameItem) { viewModelScope.launch { repository?.addGame(item.copy(creatorId = _currentUserId.value)) } }
@@ -169,6 +173,10 @@ class InsiemeViewModel : ViewModel() {
     fun toggleGameStatus(item: GameItem) {
         val newStatus = if (item.status == ActivityStatus.TODO) ActivityStatus.DONE else ActivityStatus.TODO
         viewModelScope.launch { repository?.updateGame(item.copy(status = newStatus)) }
+    }
+    fun toggleGameParticipation(item: GameItem) {
+        val newList = if (item.participants.contains(_currentUserId.value)) item.participants - _currentUserId.value else item.participants + _currentUserId.value
+        viewModelScope.launch { repository?.updateGame(item.copy(participants = newList)) }
     }
 
     // Wishlist
