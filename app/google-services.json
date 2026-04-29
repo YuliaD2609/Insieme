@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "722846391770",
+    "project_id": "insieme-d1688",
+    "storage_bucket": "insieme-d1688.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:722846391770:android:b156512009874ff50534e3",
+        "android_client_info": {
+          "package_name": "com.insieme.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHTImTpqCmQZpgPatPChdNlEnVxVtupz0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

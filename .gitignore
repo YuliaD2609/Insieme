@@ -1,0 +1,20 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# Android App
+app/build/
+
+# Kotlin
+*.kotlin_module
+
+# Misc
+.DS_Store
+*.swp
+*.lock
