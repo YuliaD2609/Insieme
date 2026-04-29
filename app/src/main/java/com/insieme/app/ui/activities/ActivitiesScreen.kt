@@ -16,11 +16,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.insieme.app.data.model.Activity
 import com.insieme.app.data.model.ActivityStatus
 import com.insieme.app.ui.components.FlowerIcon
@@ -42,6 +45,7 @@ fun ActivitiesScreen(
     val currentUserId by viewModel.currentUserId.collectAsState()
     val groupSize by viewModel.groupSize.collectAsState()
     val currentSort by viewModel.sortOrder.collectAsState()
+    val userImages by viewModel.userImages.collectAsState()
 
     val pastelGreen = Color(0xFFF1F8E9)
     val deepGreen = Color(0xFF81C784)
@@ -122,6 +126,7 @@ fun ActivitiesScreen(
                                 currentUserId = currentUserId, 
                                 groupSize = groupSize, 
                                 primaryColor = deepGreen,
+                                userImages = userImages,
                                 onVote = { viewModel.toggleParticipation(activity) },
                                 onDone = { viewModel.markActivityAsDone(activity) },
                                 onDelete = { viewModel.deleteActivity(activity.id) },
@@ -133,7 +138,7 @@ fun ActivitiesScreen(
                     if (awayActivitiesGrouped.isNotEmpty()) {
                         item { 
                             Spacer(modifier = Modifier.height(8.dp))
-                            SectionHeader("Fuori casa", Icons.Default.LocationOn, Color(0xFF8D6E63)) 
+                            SectionHeader("Fuori casa", Icons.Default.LocationOn, Color(0xFFA1887F)) 
                         }
                         awayActivitiesGrouped.forEach { (location, list) ->
                             item { SubSectionHeader(location.replaceFirstChar { it.uppercase() }) }
@@ -142,7 +147,8 @@ fun ActivitiesScreen(
                                     activity = activity, 
                                     currentUserId = currentUserId, 
                                     groupSize = groupSize, 
-                                    primaryColor = Color(0xFF8D6E63),
+                                    primaryColor = Color(0xFFA1887F),
+                                    userImages = userImages,
                                     onVote = { viewModel.toggleParticipation(activity) },
                                     onDone = { viewModel.markActivityAsDone(activity) },
                                     onDelete = { viewModel.deleteActivity(activity.id) },
@@ -157,7 +163,7 @@ fun ActivitiesScreen(
                             Spacer(modifier = Modifier.height(24.dp))
                             SectionHeader("Fatte", Icons.Default.CheckCircle, Color.LightGray)
                         }
-                            items(doneActivities, key = { "done_${it.id}_${doneActivities.indexOf(it)}" }) { activity ->
+                        items(doneActivities, key = { "done_${it.id}_${doneActivities.indexOf(it)}" }) { activity ->
                             DoneActivityCard(activity, deepGreen) { viewModel.toggleParticipation(activity) }
                         }
                     }
@@ -217,6 +223,7 @@ fun ActivityCard(
     currentUserId: String, 
     groupSize: Int, 
     primaryColor: Color,
+    userImages: Map<String, String>,
     onVote: () -> Unit,
     onDone: () -> Unit,
     onDelete: () -> Unit,
@@ -260,7 +267,9 @@ fun ActivityCard(
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(modifier = Modifier.weight(1f)) {
-                    activity.participants.forEach { name -> ParticipantAvatar(name) }
+                    activity.participants.forEach { name -> 
+                        ParticipantAvatar(name, userImages[name]) 
+                    }
                 }
                 
                 if (activity.creatorId == currentUserId) {
@@ -279,9 +288,26 @@ fun ActivityCard(
 }
 
 @Composable
-fun ParticipantAvatar(name: String) {
-    Surface(modifier = Modifier.size(30.dp).offset(x = (-4).dp), shape = CircleShape, color = Color.LightGray.copy(alpha = 0.2f), border = androidx.compose.foundation.BorderStroke(2.dp, Color.White)) {
-        Box(contentAlignment = Alignment.Center) { Text(name.take(1).uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+fun ParticipantAvatar(name: String, imageUrl: String?) {
+    Surface(
+        modifier = Modifier.size(32.dp).offset(x = (-4).dp), 
+        shape = CircleShape, 
+        color = Color(0xFFF5F5F5), 
+        border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
+        shadowElevation = 1.dp
+    ) {
+        Box(contentAlignment = Alignment.Center) { 
+            if (!imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = name,
+                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text(name.take(1).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.Gray) 
+            }
+        }
     }
 }
 

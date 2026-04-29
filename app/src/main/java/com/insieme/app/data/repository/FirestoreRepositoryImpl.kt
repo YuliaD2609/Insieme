@@ -87,38 +87,31 @@ class FirestoreRepositoryImpl(
             .document(id).delete().await()
     }
 
-    override fun getWishlist(shared: Boolean): Flow<List<WishlistItem>> {
-        val collection = if (shared) "shared_wishlist" else "wishlist"
-        return db.collection("spaces").document(spaceId).collection(collection)
+    override fun getWishlist(): Flow<List<WishlistItem>> =
+        db.collection("spaces").document(spaceId).collection("wishlist")
             .snapshots().map { snapshot -> snapshot.toObjects(WishlistItem::class.java) }
-    }
 
-    override suspend fun getWishlistItem(id: String, shared: Boolean): WishlistItem? {
-        val collection = if (shared) "shared_wishlist" else "wishlist"
-        return try {
-            db.collection("spaces").document(spaceId).collection(collection)
+    override suspend fun getWishlistItem(id: String): WishlistItem? =
+        try {
+            db.collection("spaces").document(spaceId).collection("wishlist")
                 .document(id).get().await().toObject(WishlistItem::class.java)
         } catch (e: Exception) {
             null
         }
-    }
 
     override suspend fun addWishlistItem(item: WishlistItem) {
-        val collection = if (item.isShared) "shared_wishlist" else "wishlist"
-        val doc = db.collection("spaces").document(spaceId).collection(collection).document()
-        db.collection("spaces").document(spaceId).collection(collection)
+        val doc = db.collection("spaces").document(spaceId).collection("wishlist").document()
+        db.collection("spaces").document(spaceId).collection("wishlist")
             .document(doc.id).set(item.copy(id = doc.id)).await()
     }
 
-    override suspend fun updateWishlistItem(item: WishlistItem, shared: Boolean) {
-        val collection = if (shared) "shared_wishlist" else "wishlist"
-        db.collection("spaces").document(spaceId).collection(collection)
+    override suspend fun updateWishlistItem(item: WishlistItem) {
+        db.collection("spaces").document(spaceId).collection("wishlist")
             .document(item.id).set(item).await()
     }
 
-    override suspend fun deleteWishlistItem(id: String, shared: Boolean) {
-        val collection = if (shared) "shared_wishlist" else "wishlist"
-        db.collection("spaces").document(spaceId).collection(collection)
+    override suspend fun deleteWishlistItem(id: String) {
+        db.collection("spaces").document(spaceId).collection("wishlist")
             .document(id).delete().await()
     }
 }

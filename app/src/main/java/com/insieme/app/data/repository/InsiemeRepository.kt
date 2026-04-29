@@ -30,9 +30,9 @@ interface InsiemeRepository {
     suspend fun deleteGame(id: String)
 
     // Wishlist
-    fun getWishlist(shared: Boolean): Flow<List<WishlistItem>>
-    suspend fun getWishlistItem(id: String, shared: Boolean): WishlistItem?
+    fun getWishlist(): Flow<List<WishlistItem>>
+    suspend fun getWishlistItem(id: String): WishlistItem?
     suspend fun addWishlistItem(item: WishlistItem)
-    suspend fun updateWishlistItem(item: WishlistItem, shared: Boolean)
-    suspend fun deleteWishlistItem(id: String, shared: Boolean)
+    suspend fun updateWishlistItem(item: WishlistItem)
+    suspend fun deleteWishlistItem(id: String)
 }
