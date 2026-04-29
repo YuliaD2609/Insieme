@@ -207,19 +207,34 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun joinSpace(id: String) {
-        val trimmedId = id.trim()
-        if (!Regex("""^\d{4}-\d{4}$""").matches(trimmedId)) {
-            _errorMessage.value = "Codice non valido"
+        val cleanedId = id.trim().replace(" ", "")
+        // Accetta 1234-5678 oppure 12345678
+        val regex = Regex("""^(\d{4}-\d{4}|\d{8})$""")
+        
+        if (!regex.matches(cleanedId)) {
+            _errorMessage.value = "Codice non valido (usa 8 cifre)"
             return
         }
+
+        // Formatta sempre come 1234-5678 per Firestore
+        val finalId = if (cleanedId.length == 8) {
+            cleanedId.take(4) + "-" + cleanedId.drop(4)
+        } else {
+            cleanedId
+        }
+
         viewModelScope.launch {
             try {
-                val exists = db.collection("spaces").document(trimmedId).get().await().exists()
+                val exists = db.collection("spaces").document(finalId).get().await().exists()
                 if (exists) {
-                    setSpaceId(trimmedId)
+                    setSpaceId(finalId)
                     _errorMessage.value = null
-                } else { _errorMessage.value = "Gruppo non trovato" }
-            } catch (e: Exception) { _errorMessage.value = "Errore connessione: ${e.message}" }
+                } else { 
+                    _errorMessage.value = "Gruppo non trovato" 
+                }
+            } catch (e: Exception) { 
+                _errorMessage.value = "Errore connessione: ${e.message}" 
+            }
         }
     }
 
