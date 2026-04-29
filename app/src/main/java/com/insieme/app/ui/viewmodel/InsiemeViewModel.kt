@@ -2,7 +2,10 @@ package com.insieme.app.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.insieme.app.data.model.*
@@ -12,10 +15,11 @@ import com.google.firebase.firestore.PersistentCacheSettings
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.firestoreSettings
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 enum class SortOrder { DEFAULT, COST, DURATION }
 
@@ -25,7 +29,6 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
             setLocalCacheSettings(PersistentCacheSettings.newBuilder().build())
         }
     }
-    private val storage = Firebase.storage
     private val prefs = application.getSharedPreferences("insieme_prefs", Context.MODE_PRIVATE)
     
     private val _spaceId = MutableStateFlow(prefs.getString("space_id", "") ?: "")
@@ -85,14 +88,12 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         else (repository ?: FirestoreRepositoryImpl(db, id)).getWishlist()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Deriviamo i partecipanti direttamente dalla collezione utenti
     val allParticipantNames = _userImages.map { it.keys + _currentUserId.value }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf(_currentUserId.value))
 
     val groupSize = allParticipantNames.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
 
     init {
-        // Observe users to get profile images
         _spaceId.onEach { id ->
             if (id.isNotBlank()) {
                 db.collection("spaces").document(id).collection("users")
@@ -121,22 +122,31 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setProfileImage(uri: String) {
-        if (_spaceId.value.isBlank()) return
-        
         viewModelScope.launch {
-            try {
-                val storageRef = storage.reference.child("profiles/${_spaceId.value}/${_currentUserId.value}.jpg")
-                storageRef.putFile(Uri.parse(uri)).await()
-                val downloadUrl = storageRef.downloadUrl.await().toString()
-                
-                _profileImage.value = downloadUrl
-                prefs.edit().putString("profile_image", downloadUrl).apply()
-                updateUserProfile()
-            } catch (e: Exception) {
-                // Se lo storage non è ancora pronto o configurato, salviamo comunque localmente per ora
-                _profileImage.value = uri
+            val base64 = processImageToBase64(uri)
+            if (base64 != null) {
+                _profileImage.value = base64
+                prefs.edit().putString("profile_image", base64).apply()
                 updateUserProfile()
             }
+        }
+    }
+
+    private suspend fun processImageToBase64(uriString: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val context = getApplication<Application>().applicationContext
+            val inputStream = context.contentResolver.openInputStream(Uri.parse(uriString))
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            
+            // Ridimensiona a 120x120 per stare sotto i limiti di Firestore e non rallentare
+            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 120, 120, true)
+            val outputStream = ByteArrayOutputStream()
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+            val byteArray = outputStream.toByteArray()
+            
+            "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        } catch (e: Exception) {
+            null
         }
     }
 
