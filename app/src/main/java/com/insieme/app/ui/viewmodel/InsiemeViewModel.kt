@@ -268,7 +268,40 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     // Wishlist
-    fun addWishlistItem(title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addWishlistItem(WishlistItem(title = title, link = link, ownerId = _userId.value)) } }
-    fun updateWishlistItem(id: String, title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateWishlistItem(WishlistItem(id = id, title = title, link = link, ownerId = _userId.value)) } }
+    fun addWishlistItem(title: String, link: String?) {
+        viewModelScope.launch {
+            var finalTitle = title
+            var finalImageUrl: String? = null
+            
+            if (!link.isNullOrBlank()) {
+                val scraped = com.insieme.app.util.LinkScraper.scrape(link)
+                if (finalTitle.isBlank()) finalTitle = scraped.title ?: "Desiderio"
+                finalImageUrl = scraped.imageUrl
+            }
+            
+            if (finalTitle.isBlank()) finalTitle = "Desiderio"
+            
+            (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addWishlistItem(
+                WishlistItem(title = finalTitle, link = link, imageUrl = finalImageUrl, ownerId = _userId.value)
+            )
+        }
+    }
+
+    fun updateWishlistItem(id: String, title: String, link: String?) {
+        viewModelScope.launch {
+            var finalTitle = title
+            var finalImageUrl: String? = null
+            
+            if (!link.isNullOrBlank()) {
+                val scraped = com.insieme.app.util.LinkScraper.scrape(link)
+                if (finalTitle.isBlank()) finalTitle = scraped.title ?: "Desiderio"
+                finalImageUrl = scraped.imageUrl
+            }
+            
+            (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateWishlistItem(
+                WishlistItem(id = id, title = finalTitle, link = link, imageUrl = finalImageUrl, ownerId = _userId.value)
+            )
+        }
+    }
     fun deleteWishlistItem(id: String) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).deleteWishlistItem(id) } }
 }
