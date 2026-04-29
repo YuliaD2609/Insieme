@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,7 +27,6 @@ import com.insieme.app.data.model.ActivityStatus
 import com.insieme.app.ui.components.FlowerIcon
 import com.insieme.app.ui.components.GroupWarningCard
 import com.insieme.app.ui.viewmodel.InsiemeViewModel
-import com.insieme.app.ui.viewmodel.SortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +38,9 @@ fun ActivitiesScreen(
     val spaceId by viewModel.spaceId.collectAsState()
     val userId by viewModel.userId.collectAsState()
     val groupSize by viewModel.groupSize.collectAsState()
+    val participantIds by viewModel.participantIds.collectAsState()
     val userImages by viewModel.userImages.collectAsState()
     val idToName by viewModel.idToName.collectAsState()
-    val sortOrder by viewModel.sortOrder.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var activityToEdit by remember { mutableStateOf<Activity?>(null) }
@@ -74,7 +74,7 @@ fun ActivitiesScreen(
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp),
+                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -85,26 +85,31 @@ fun ActivitiesScreen(
                     ),
                     modifier = Modifier.weight(1f)
                 )
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    FilterChip(
-                        selected = sortOrder == SortOrder.COST,
-                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.COST) SortOrder.DEFAULT else SortOrder.COST) },
-                        label = { Icon(Icons.Default.AttachMoney, null, modifier = Modifier.size(16.dp)) },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f))
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    FilterChip(
-                        selected = sortOrder == SortOrder.DURATION,
-                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.DURATION) SortOrder.DEFAULT else SortOrder.DURATION) },
-                        label = { Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(16.dp)) },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f))
-                    )
+                FlowerIcon(modifier = Modifier.size(36.dp), color = deepGreen)
+            }
+
+            if (spaceId.isNotBlank()) {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(participantIds.toList()) { id ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            ParticipantAvatar(idToName[id] ?: "Utente", userImages[id], size = 48.dp)
+                            Text(
+                                if (id == userId) "Tu" else (idToName[id]?.take(8) ?: "Utente"),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    }
                 }
             }
 
             LazyColumn(
-                contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp),
+                contentPadding = PaddingValues(24.dp, 16.dp, 24.dp, 100.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (spaceId.isBlank()) {
@@ -228,9 +233,9 @@ fun ActivityCard(
 }
 
 @Composable
-fun ParticipantAvatar(name: String, imageUrl: String?) {
+fun ParticipantAvatar(name: String, imageUrl: String?, size: androidx.compose.ui.unit.Dp = 28.dp) {
     Surface(
-        modifier = Modifier.size(28.dp).offset(x = 0.dp).clip(CircleShape),
+        modifier = Modifier.size(size).offset(x = 0.dp).clip(CircleShape),
         color = Color.LightGray.copy(alpha = 0.2f),
         border = androidx.compose.foundation.BorderStroke(2.dp, Color.White)
     ) {
@@ -238,7 +243,7 @@ fun ParticipantAvatar(name: String, imageUrl: String?) {
             AsyncImage(model = imageUrl, contentDescription = name, contentScale = ContentScale.Crop)
         } else {
             Box(contentAlignment = Alignment.Center) {
-                Text(name.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text(name.take(1).uppercase(), fontSize = (size.value / 2.5).sp, fontWeight = FontWeight.Bold)
             }
         }
     }
