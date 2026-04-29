@@ -42,8 +42,10 @@ fun WishlistScreen(
     val participants by viewModel.allParticipantNames.collectAsState()
     val spaceId by viewModel.spaceId.collectAsState()
     val currentUserId by viewModel.currentUserId.collectAsState()
+    val userImages by viewModel.userImages.collectAsState()
     
-    var selectedParticipant by remember { mutableStateOf(currentUserId) }
+    // "Tutti" sarà il valore speciale per vedere tutto
+    var selectedParticipant by remember { mutableStateOf("Tutti") }
     var showCreateDialog by remember { mutableStateOf(false) }
     var itemToEdit by remember { mutableStateOf<WishlistItem?>(null) }
     var zoomImageUrl by remember { mutableStateOf<String?>(null) }
@@ -51,13 +53,13 @@ fun WishlistScreen(
     val pastelPink = Color(0xFFFFF5F8)
     val deepPink = Color(0xFFF48FB1)
 
-    val participantList = participants.toList().sortedBy { if (it == currentUserId) 0 else 1 }
+    val participantList = listOf("Tutti") + participants.toList().sortedBy { if (it == currentUserId) 0 else 1 }
     
-    if (selectedParticipant !in participants && participants.isNotEmpty()) {
-        selectedParticipant = currentUserId
+    val filteredItems = if (selectedParticipant == "Tutti") {
+        items
+    } else {
+        items.filter { it.ownerId == selectedParticipant }
     }
-
-    val filteredItems = items.filter { it.ownerId == selectedParticipant }
 
     if (showCreateDialog) {
         WishlistDialog(
@@ -110,18 +112,32 @@ fun WishlistScreen(
                     containerColor = Color.White,
                     contentColor = deepPink,
                     edgePadding = 24.dp,
+                    divider = {},
                     indicator = { tabPositions ->
-                        TabRowDefaults.Indicator(
-                            Modifier.tabIndicatorOffset(tabPositions[participantList.indexOf(selectedParticipant).coerceAtLeast(0)]),
-                            color = deepPink
-                        )
+                        val index = participantList.indexOf(selectedParticipant).coerceAtLeast(0)
+                        if (index < tabPositions.size) {
+                            TabRowDefaults.Indicator(
+                                Modifier.tabIndicatorOffset(tabPositions[index]),
+                                color = deepPink
+                            )
+                        }
                     }
                 ) {
                     participantList.forEach { name ->
                         Tab(
                             selected = selectedParticipant == name,
                             onClick = { selectedParticipant = name },
-                            text = { Text(if (name == currentUserId) "La mia" else "Lista di $name", fontWeight = FontWeight.Bold) }
+                            text = { 
+                                Text(
+                                    when(name) {
+                                        "Tutti" -> "Tutti"
+                                        currentUserId -> "Miei"
+                                        else -> name
+                                    }, 
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                ) 
+                            }
                         )
                     }
                 }
@@ -143,11 +159,19 @@ fun WishlistScreen(
                         )
                     }
                 } else {
+                    if (filteredItems.isEmpty()) {
+                        item(span = { GridItemSpan(2) }) {
+                            Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                                Text("Nessun desiderio ancora...", color = Color.LightGray)
+                            }
+                        }
+                    }
                     items(filteredItems) { item ->
                         WishlistCard(
                             item = item, 
                             currentUserId = currentUserId, 
                             color = deepPink,
+                            ownerImage = userImages[item.ownerId],
                             onDelete = { viewModel.deleteWishlistItem(item.id) },
                             onEdit = { itemToEdit = item },
                             onZoom = { zoomImageUrl = item.imageUrl }
@@ -166,7 +190,7 @@ fun WishlistScreen(
 }
 
 @Composable
-fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, onDelete: () -> Unit, onEdit: () -> Unit, onZoom: () -> Unit) {
+fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, ownerImage: String?, onDelete: () -> Unit, onEdit: () -> Unit, onZoom: () -> Unit) {
     val context = LocalContext.current
     
     Card(
@@ -207,6 +231,21 @@ fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, onDele
                     Text("🛍️", fontSize = 40.sp)
                 }
                 
+                // Avatar del proprietario se siamo in vista "Tutti"
+                Surface(
+                    modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).size(24.dp),
+                    shape = CircleShape,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, Color.White)
+                ) {
+                    if (!ownerImage.isNullOrBlank()) {
+                        AsyncImage(model = ownerImage, contentDescription = null, contentScale = ContentScale.Crop)
+                    } else {
+                        Box(modifier = Modifier.background(color.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                            Text(item.ownerId.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = color)
+                        }
+                    }
+                }
+
                 if (item.ownerId == currentUserId) {
                     Row(
                         modifier = Modifier
@@ -234,13 +273,14 @@ fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, onDele
                 }
             }
             
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     item.title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
-                    minLines = 2
+                    minLines = 2,
+                    fontSize = 13.sp
                 )
             }
         }
