@@ -7,7 +7,10 @@ import androidx.lifecycle.viewModelScope
 import com.insieme.app.data.model.*
 import com.insieme.app.data.repository.FirestoreRepositoryImpl
 import com.insieme.app.data.repository.InsiemeRepository
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.PersistentCacheSettings
 import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.firestoreSettings
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -16,7 +19,12 @@ import kotlinx.coroutines.tasks.await
 enum class SortOrder { DEFAULT, COST, DURATION }
 
 class InsiemeViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = Firebase.firestore
+    private val db = Firebase.firestore.apply {
+        // Attiva la persistenza offline esplicita
+        firestoreSettings = firestoreSettings {
+            setLocalCacheSettings(PersistentCacheSettings.newBuilder().build())
+        }
+    }
     private val prefs = application.getSharedPreferences("insieme_prefs", Context.MODE_PRIVATE)
     
     private val _spaceId = MutableStateFlow(prefs.getString("space_id", "") ?: "")
@@ -63,26 +71,17 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
 
     val mediaItems = _spaceId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList())
-        else {
-            val repo = repository ?: FirestoreRepositoryImpl(db, id)
-            repo.getMediaItems()
-        }
+        else (repository ?: FirestoreRepositoryImpl(db, id)).getMediaItems()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val games = _spaceId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList())
-        else {
-            val repo = repository ?: FirestoreRepositoryImpl(db, id)
-            repo.getGames()
-        }
+        else (repository ?: FirestoreRepositoryImpl(db, id)).getGames()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sharedWishlist = _spaceId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList())
-        else {
-            val repo = repository ?: FirestoreRepositoryImpl(db, id)
-            repo.getWishlist()
-        }
+        else (repository ?: FirestoreRepositoryImpl(db, id)).getWishlist()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allParticipantNames = activities.map { list ->
@@ -102,9 +101,29 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
                         } ?: emptyMap()
                         _userImages.value = map
                     }
-                updateUserProfile() // Ensure cloud is updated with local name/photo on start
+                updateUserProfile()
             }
         }.launchIn(viewModelScope)
+    }
+
+    fun clearCurrentSpace() {
+        val id = _spaceId.value
+        if (id.isNotBlank()) {
+            viewModelScope.launch {
+                try {
+                    // Svuota collezioni principali
+                    val collections = listOf("activities", "media", "games", "wishlist")
+                    for (col in collections) {
+                        val docs = db.collection("spaces").document(id).collection(col).get().await()
+                        for (doc in docs) {
+                            doc.reference.delete()
+                        }
+                    }
+                } catch (e: Exception) {
+                    _errorMessage.value = "Errore durante lo svuotamento"
+                }
+            }
+        }
     }
 
     fun setSpaceId(id: String) {
