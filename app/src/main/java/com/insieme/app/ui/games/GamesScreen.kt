@@ -46,157 +46,65 @@ fun GamesScreen(
     val doneGames = games.filter { it.status == ActivityStatus.DONE }
 
     if (showCreateDialog) {
-        GameDialog(
-            onDismiss = { showCreateDialog = false },
-            onSave = { newItem ->
-                viewModel.addGame(newItem)
-                showCreateDialog = false
-            }
-        )
+        GameDialog(onDismiss = { showCreateDialog = false }, onSave = { viewModel.addGame(it); showCreateDialog = false })
     }
 
     if (itemToEdit != null) {
-        GameDialog(
-            item = itemToEdit,
-            onDismiss = { itemToEdit = null },
-            onSave = { updatedItem ->
-                viewModel.updateGame(updatedItem)
-                itemToEdit = null
-            }
-        )
+        GameDialog(item = itemToEdit, onDismiss = { itemToEdit = null }, onSave = { viewModel.updateGame(it); itemToEdit = null })
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "A cosa giochiamo?",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-1).sp
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+            Row(modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("A cosa giochiamo?", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold), modifier = Modifier.weight(1f))
                 FlowerIcon(modifier = Modifier.size(36.dp), color = deepBlue)
             }
 
-            LazyColumn(
-                contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (spaceId.isBlank()) {
-                    item {
-                        GroupWarningCard(
-                            primaryColor = deepBlue,
-                            onNavigateToProfile = onNavigateToProfile
-                        )
-                    }
-                } else {
+            LazyColumn(contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (spaceId.isBlank()) { item { GroupWarningCard(primaryColor = deepBlue, onNavigateToProfile = onNavigateToProfile) } }
+                else {
                     if (todoGames.isNotEmpty()) {
                         items(todoGames, key = { it.id }) { item ->
-                            GameCard(
-                                item = item,
-                                currentUserId = userId,
-                                groupSize = groupSize,
-                                primaryColor = deepBlue,
-                                userImages = userImages,
-                                idToName = idToName,
-                                onVote = { viewModel.toggleGameParticipation(item) },
-                                onDone = { viewModel.toggleGameStatus(item) },
-                                onDelete = { viewModel.deleteGame(item.id) },
-                                onEdit = { itemToEdit = item }
-                            )
+                            GameCard(item, userId, groupSize, deepBlue, userImages, idToName, viewModel, onVote = { viewModel.toggleGameParticipation(item) }, onDone = { viewModel.toggleGameStatus(item) }, onDelete = { viewModel.deleteGame(item.id) }, onEdit = { itemToEdit = item })
                         }
                     }
-
                     if (doneGames.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text("Già fatti", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray))
-                        }
-                        items(doneGames, key = { it.id }) { item ->
-                            DoneGameCard(item, deepBlue) { viewModel.toggleGameStatus(item) }
-                        }
+                        item { Spacer(modifier = Modifier.height(24.dp)); Text("Già fatti", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray)) }
+                        items(doneGames, key = { it.id }) { item -> DoneGameCard(item, deepBlue) { viewModel.toggleGameStatus(item) } }
                     }
                 }
             }
         }
-
         if (spaceId.isNotBlank()) {
-            FloatingActionButton(
-                onClick = { showCreateDialog = true },
-                containerColor = deepBlue,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp).size(64.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Aggiungi", modifier = Modifier.size(32.dp))
-            }
+            FloatingActionButton(onClick = { showCreateDialog = true }, containerColor = deepBlue, contentColor = Color.White, shape = RoundedCornerShape(20.dp), modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp).size(64.dp)) { Icon(Icons.Default.Add, null, modifier = Modifier.size(32.dp)) }
         }
     }
 }
 
 @Composable
-fun GameCard(
-    item: GameItem,
-    currentUserId: String,
-    groupSize: Int,
-    primaryColor: Color,
-    userImages: Map<String, String>,
-    idToName: Map<String, String>,
-    onVote: () -> Unit,
-    onDone: () -> Unit,
-    onDelete: () -> Unit,
-    onEdit: () -> Unit
-) {
+fun GameCard(item: GameItem, currentUserId: String, groupSize: Int, primaryColor: Color, userImages: Map<String, String>, idToName: Map<String, String>, viewModel: InsiemeViewModel, onVote: () -> Unit, onDone: () -> Unit, onDelete: () -> Unit, onEdit: () -> Unit) {
     val isParticipating = item.participants.contains(currentUserId)
     val everyoneAgreed = item.participants.size >= groupSize
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(32.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(item.title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (everyoneAgreed) {
-                        IconButton(onClick = onDone, modifier = Modifier.padding(end = 8.dp)) {
-                            FlowerIcon(modifier = Modifier.size(32.dp), color = primaryColor)
-                        }
-                    }
-
-                    IconButton(
-                        onClick = onVote,
-                        modifier = Modifier.size(44.dp).background(if (isParticipating) primaryColor else primaryColor.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
-                    ) {
-                        Icon(Icons.Default.Check, null, tint = if (isParticipating) Color.White else primaryColor.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
-                    }
+                    if (everyoneAgreed) { IconButton(onClick = onDone, modifier = Modifier.padding(end = 8.dp)) { FlowerIcon(modifier = Modifier.size(32.dp), color = primaryColor) } }
+                    IconButton(onClick = onVote, modifier = Modifier.size(44.dp).background(if (isParticipating) primaryColor else primaryColor.copy(alpha = 0.05f), RoundedCornerShape(14.dp))) { Icon(Icons.Default.Check, null, tint = if (isParticipating) Color.White else primaryColor.copy(alpha = 0.5f), modifier = Modifier.size(20.dp)) }
                 }
             }
-            
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(modifier = Modifier.weight(1f)) {
                     item.participants.forEach { id -> 
-                        ParticipantAvatar(idToName[id] ?: "Utente", userImages[id]) 
+                        ParticipantAvatar(idToName[id] ?: "Utente", userImages[id], viewModel = viewModel) 
                     }
                 }
-                
                 if (item.creatorId == currentUserId) {
                     Row {
-                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Edit, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                        }
-                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Delete, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                        }
+                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Edit, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
+                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Delete, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
                     }
                 }
             }

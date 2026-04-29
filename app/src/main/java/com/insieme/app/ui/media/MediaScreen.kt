@@ -47,170 +47,69 @@ fun MediaScreen(
     val doneMedia = mediaItems.filter { it.status == ActivityStatus.DONE }
 
     if (showCreateDialog) {
-        MediaDialog(
-            onDismiss = { showCreateDialog = false },
-            onSave = { newItem ->
-                viewModel.addMediaItem(newItem)
-                showCreateDialog = false
-            }
-        )
+        MediaDialog(onDismiss = { showCreateDialog = false }, onSave = { viewModel.addMediaItem(it); showCreateDialog = false })
     }
 
     if (itemToEdit != null) {
-        MediaDialog(
-            item = itemToEdit,
-            onDismiss = { itemToEdit = null },
-            onSave = { updatedItem ->
-                viewModel.updateMediaItem(updatedItem)
-                itemToEdit = null
-            }
-        )
+        MediaDialog(item = itemToEdit, onDismiss = { itemToEdit = null }, onSave = { viewModel.updateMediaItem(it); itemToEdit = null })
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Cosa vediamo?",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-1).sp
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+            Row(modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Cosa vediamo?", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold), modifier = Modifier.weight(1f))
                 FlowerIcon(modifier = Modifier.size(36.dp), color = deepBeige)
             }
 
-            LazyColumn(
-                contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (spaceId.isBlank()) {
-                    item {
-                        GroupWarningCard(
-                            primaryColor = deepBeige,
-                            onNavigateToProfile = onNavigateToProfile
-                        )
-                    }
-                } else {
+            LazyColumn(contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (spaceId.isBlank()) { item { GroupWarningCard(primaryColor = deepBeige, onNavigateToProfile = onNavigateToProfile) } }
+                else {
                     if (todoMedia.isNotEmpty()) {
                         items(todoMedia, key = { it.id }) { item ->
-                            MediaCard(
-                                item = item,
-                                currentUserId = userId,
-                                groupSize = groupSize,
-                                primaryColor = deepBeige,
-                                userImages = userImages,
-                                idToName = idToName,
-                                onVote = { viewModel.toggleMediaParticipation(item) },
-                                onDone = { viewModel.toggleMediaStatus(item) },
-                                onDelete = { viewModel.deleteMediaItem(item.id) },
-                                onEdit = { itemToEdit = item }
-                            )
+                            MediaCard(item, userId, groupSize, deepBeige, userImages, idToName, viewModel, onVote = { viewModel.toggleMediaParticipation(item) }, onDone = { viewModel.toggleMediaStatus(item) }, onDelete = { viewModel.deleteMediaItem(item.id) }, onEdit = { itemToEdit = item })
                         }
                     }
-
                     if (doneMedia.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text("Già visti", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray))
-                        }
-                        items(doneMedia, key = { it.id }) { item ->
-                            DoneMediaCard(item, deepBeige) { viewModel.toggleMediaStatus(item) }
-                        }
+                        item { Spacer(modifier = Modifier.height(24.dp)); Text("Già visti", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray)) }
+                        items(doneMedia, key = { it.id }) { item -> DoneMediaCard(item, deepBeige) { viewModel.toggleMediaStatus(item) } }
                     }
                 }
             }
         }
-
         if (spaceId.isNotBlank()) {
-            FloatingActionButton(
-                onClick = { showCreateDialog = true },
-                containerColor = deepBeige,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp).size(64.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Aggiungi", modifier = Modifier.size(32.dp))
-            }
+            FloatingActionButton(onClick = { showCreateDialog = true }, containerColor = deepBeige, contentColor = Color.White, shape = RoundedCornerShape(20.dp), modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp).size(64.dp)) { Icon(Icons.Default.Add, null, modifier = Modifier.size(32.dp)) }
         }
     }
 }
 
 @Composable
-fun MediaCard(
-    item: MediaItem,
-    currentUserId: String,
-    groupSize: Int,
-    primaryColor: Color,
-    userImages: Map<String, String>,
-    idToName: Map<String, String>,
-    onVote: () -> Unit,
-    onDone: () -> Unit,
-    onDelete: () -> Unit,
-    onEdit: () -> Unit
-) {
+fun MediaCard(item: MediaItem, currentUserId: String, groupSize: Int, primaryColor: Color, userImages: Map<String, String>, idToName: Map<String, String>, viewModel: InsiemeViewModel, onVote: () -> Unit, onDone: () -> Unit, onDelete: () -> Unit, onEdit: () -> Unit) {
     val isParticipating = item.participants.contains(currentUserId)
     val everyoneAgreed = item.participants.size >= groupSize
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(32.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(item.title, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
                     Spacer(modifier = Modifier.height(6.dp))
-                    Surface(
-                        color = primaryColor.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            if (item.type == MediaType.FILM) "Film" else "Serie TV",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = primaryColor)
-                        )
-                    }
+                    Surface(color = primaryColor.copy(alpha = 0.1f), shape = RoundedCornerShape(10.dp)) { Text(if (item.type == MediaType.FILM) "Film" else "Serie TV", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = primaryColor)) }
                 }
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (everyoneAgreed) {
-                        IconButton(onClick = onDone, modifier = Modifier.padding(end = 8.dp)) {
-                            FlowerIcon(modifier = Modifier.size(32.dp), color = primaryColor)
-                        }
-                    }
-
-                    IconButton(
-                        onClick = onVote,
-                        modifier = Modifier.size(44.dp).background(if (isParticipating) primaryColor else primaryColor.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
-                    ) {
-                        Icon(Icons.Default.Check, null, tint = if (isParticipating) Color.White else primaryColor.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
-                    }
+                    if (everyoneAgreed) { IconButton(onClick = onDone, modifier = Modifier.padding(end = 8.dp)) { FlowerIcon(modifier = Modifier.size(32.dp), color = primaryColor) } }
+                    IconButton(onClick = onVote, modifier = Modifier.size(44.dp).background(if (isParticipating) primaryColor else primaryColor.copy(alpha = 0.05f), RoundedCornerShape(14.dp))) { Icon(Icons.Default.Check, null, tint = if (isParticipating) Color.White else primaryColor.copy(alpha = 0.5f), modifier = Modifier.size(20.dp)) }
                 }
             }
-            
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(modifier = Modifier.weight(1f)) {
                     item.participants.forEach { id -> 
-                        ParticipantAvatar(idToName[id] ?: "Utente", userImages[id]) 
+                        ParticipantAvatar(idToName[id] ?: "Utente", userImages[id], viewModel = viewModel) 
                     }
                 }
-                
                 if (item.creatorId == currentUserId) {
                     Row {
-                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Edit, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                        }
-                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Delete, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                        }
+                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Edit, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
+                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Delete, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
                     }
                 }
             }
