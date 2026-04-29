@@ -102,6 +102,7 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
                         _userImages.value = map
                     }
                 updateUserProfile()
+                clearCurrentSpace() // ESECUZIONE UNA TANTUM: Svuota il DB all'avvio
             }
         }.launchIn(viewModelScope)
     }
