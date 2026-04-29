@@ -2,16 +2,17 @@ package com.insieme.app.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.insieme.app.data.model.*
 import com.insieme.app.data.repository.FirestoreRepositoryImpl
 import com.insieme.app.data.repository.InsiemeRepository
-import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.PersistentCacheSettings
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.firestoreSettings
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -20,11 +21,11 @@ enum class SortOrder { DEFAULT, COST, DURATION }
 
 class InsiemeViewModel(application: Application) : AndroidViewModel(application) {
     private val db = Firebase.firestore.apply {
-        // Attiva la persistenza offline esplicita
         firestoreSettings = firestoreSettings {
             setLocalCacheSettings(PersistentCacheSettings.newBuilder().build())
         }
     }
+    private val storage = Firebase.storage
     private val prefs = application.getSharedPreferences("insieme_prefs", Context.MODE_PRIVATE)
     
     private val _spaceId = MutableStateFlow(prefs.getString("space_id", "") ?: "")
@@ -84,9 +85,9 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         else (repository ?: FirestoreRepositoryImpl(db, id)).getWishlist()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val allParticipantNames = activities.map { list ->
-        list.flatMap { it.participants }.toSet() + _currentUserId.value
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf(_currentUserId.value))
+    // Deriviamo i partecipanti direttamente dalla collezione utenti
+    val allParticipantNames = _userImages.map { it.keys + _currentUserId.value }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf(_currentUserId.value))
 
     val groupSize = allParticipantNames.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
 
@@ -106,26 +107,6 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         }.launchIn(viewModelScope)
     }
 
-    fun clearCurrentSpace() {
-        val id = _spaceId.value
-        if (id.isNotBlank()) {
-            viewModelScope.launch {
-                try {
-                    // Svuota collezioni principali
-                    val collections = listOf("activities", "media", "games", "wishlist")
-                    for (col in collections) {
-                        val docs = db.collection("spaces").document(id).collection(col).get().await()
-                        for (doc in docs) {
-                            doc.reference.delete()
-                        }
-                    }
-                } catch (e: Exception) {
-                    _errorMessage.value = "Errore durante lo svuotamento"
-                }
-            }
-        }
-    }
-
     fun setSpaceId(id: String) {
         _spaceId.value = id
         prefs.edit().putString("space_id", id).apply()
@@ -140,9 +121,23 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setProfileImage(uri: String) {
-        _profileImage.value = uri
-        prefs.edit().putString("profile_image", uri).apply()
-        updateUserProfile()
+        if (_spaceId.value.isBlank()) return
+        
+        viewModelScope.launch {
+            try {
+                val storageRef = storage.reference.child("profiles/${_spaceId.value}/${_currentUserId.value}.jpg")
+                storageRef.putFile(Uri.parse(uri)).await()
+                val downloadUrl = storageRef.downloadUrl.await().toString()
+                
+                _profileImage.value = downloadUrl
+                prefs.edit().putString("profile_image", downloadUrl).apply()
+                updateUserProfile()
+            } catch (e: Exception) {
+                // Se lo storage non è ancora pronto o configurato, salviamo comunque localmente per ora
+                _profileImage.value = uri
+                updateUserProfile()
+            }
+        }
     }
 
     private fun updateUserProfile() {
