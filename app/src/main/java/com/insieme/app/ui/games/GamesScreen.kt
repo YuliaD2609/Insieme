@@ -32,14 +32,14 @@ fun GamesScreen(
 ) {
     val games by viewModel.games.collectAsState()
     val spaceId by viewModel.spaceId.collectAsState()
-    val currentUserId by viewModel.currentUserId.collectAsState()
+    val userId by viewModel.userId.collectAsState()
     val groupSize by viewModel.groupSize.collectAsState()
     val userImages by viewModel.userImages.collectAsState()
+    val idToName by viewModel.idToName.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var itemToEdit by remember { mutableStateOf<GameItem?>(null) }
     
-    val pastelBlue = Color(0xFFF0F7FF)
     val deepBlue = Color(0xFF90CAF9)
 
     val todoGames = games.filter { it.status == ActivityStatus.TODO }
@@ -99,10 +99,11 @@ fun GamesScreen(
                         items(todoGames, key = { it.id }) { item ->
                             GameCard(
                                 item = item,
-                                currentUserId = currentUserId,
+                                currentUserId = userId,
                                 groupSize = groupSize,
                                 primaryColor = deepBlue,
                                 userImages = userImages,
+                                idToName = idToName,
                                 onVote = { viewModel.toggleGameParticipation(item) },
                                 onDone = { viewModel.toggleGameStatus(item) },
                                 onDelete = { viewModel.deleteGame(item.id) },
@@ -145,6 +146,7 @@ fun GameCard(
     groupSize: Int,
     primaryColor: Color,
     userImages: Map<String, String>,
+    idToName: Map<String, String>,
     onVote: () -> Unit,
     onDone: () -> Unit,
     onDelete: () -> Unit,
@@ -182,8 +184,8 @@ fun GameCard(
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(modifier = Modifier.weight(1f)) {
-                    item.participants.forEach { name -> 
-                        ParticipantAvatar(name, userImages[name]) 
+                    item.participants.forEach { id -> 
+                        ParticipantAvatar(idToName[id] ?: "Utente", userImages[id]) 
                     }
                 }
                 

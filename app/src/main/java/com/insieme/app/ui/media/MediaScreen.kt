@@ -33,14 +33,14 @@ fun MediaScreen(
 ) {
     val mediaItems by viewModel.mediaItems.collectAsState()
     val spaceId by viewModel.spaceId.collectAsState()
-    val currentUserId by viewModel.currentUserId.collectAsState()
+    val userId by viewModel.userId.collectAsState()
     val groupSize by viewModel.groupSize.collectAsState()
     val userImages by viewModel.userImages.collectAsState()
+    val idToName by viewModel.idToName.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var itemToEdit by remember { mutableStateOf<MediaItem?>(null) }
     
-    val pastelBeige = Color(0xFFFDFCFB)
     val deepBeige = Color(0xFFBCB1A1)
 
     val todoMedia = mediaItems.filter { it.status == ActivityStatus.TODO }
@@ -100,10 +100,11 @@ fun MediaScreen(
                         items(todoMedia, key = { it.id }) { item ->
                             MediaCard(
                                 item = item,
-                                currentUserId = currentUserId,
+                                currentUserId = userId,
                                 groupSize = groupSize,
                                 primaryColor = deepBeige,
                                 userImages = userImages,
+                                idToName = idToName,
                                 onVote = { viewModel.toggleMediaParticipation(item) },
                                 onDone = { viewModel.toggleMediaStatus(item) },
                                 onDelete = { viewModel.deleteMediaItem(item.id) },
@@ -146,6 +147,7 @@ fun MediaCard(
     groupSize: Int,
     primaryColor: Color,
     userImages: Map<String, String>,
+    idToName: Map<String, String>,
     onVote: () -> Unit,
     onDone: () -> Unit,
     onDelete: () -> Unit,
@@ -196,8 +198,8 @@ fun MediaCard(
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(modifier = Modifier.weight(1f)) {
-                    item.participants.forEach { name -> 
-                        ParticipantAvatar(name, userImages[name]) 
+                    item.participants.forEach { id -> 
+                        ParticipantAvatar(idToName[id] ?: "Utente", userImages[id]) 
                     }
                 }
                 

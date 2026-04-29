@@ -98,6 +98,7 @@ fun MainScreen(viewModel: InsiemeViewModel = viewModel()) {
                         label = { Text(screen.title, style = MaterialTheme.typography.labelSmall) },
                         selected = selected,
                         onClick = {
+                            viewModel.finalizeName()
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true

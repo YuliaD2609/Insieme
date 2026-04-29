@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.util.UUID
 
 enum class SortOrder { DEFAULT, COST, DURATION }
 
@@ -32,15 +33,24 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
     private val prefs = application.getSharedPreferences("insieme_prefs", Context.MODE_PRIVATE)
     
+    private val _userId = MutableStateFlow(prefs.getString("internal_user_id", null) ?: run {
+        val newId = UUID.randomUUID().toString()
+        prefs.edit().putString("internal_user_id", newId).apply()
+        newId
+    })
+    val userId: StateFlow<String> = _userId
+
     private val _spaceId = MutableStateFlow(prefs.getString("space_id", "") ?: "")
     val spaceId: StateFlow<String> = _spaceId
 
+    // Permettiamo che sia vuoto durante la digitazione
     private val _currentUserId = MutableStateFlow(prefs.getString("user_id", "Tu") ?: "Tu")
     val currentUserId: StateFlow<String> = _currentUserId
 
     private val _profileImage = MutableStateFlow<String?>(prefs.getString("profile_image", null))
     val profileImage: StateFlow<String?> = _profileImage
 
+    private val _userNames = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _userImages = MutableStateFlow<Map<String, String>>(emptyMap())
     val userImages: StateFlow<Map<String, String>> = _userImages
 
@@ -89,20 +99,30 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         else (repository ?: FirestoreRepositoryImpl(db, id)).getWishlist()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val allParticipantNames = _userImages.map { it.keys + _currentUserId.value }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf(_currentUserId.value))
+    val allParticipantNames = _userNames.map { it.values.toSet() + _currentUserId.value.ifBlank { "Tu" } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf(_currentUserId.value.ifBlank { "Tu" }))
 
-    val groupSize = allParticipantNames.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
+    val participantIds = _userNames.map { it.keys + _userId.value }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf(_userId.value))
+    
+    val idToName = _userNames.map { it + (_userId.value to _currentUserId.value.ifBlank { "Tu" }) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), mapOf(_userId.value to _currentUserId.value.ifBlank { "Tu" }))
+
+    val groupSize = participantIds.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
 
     init {
         _spaceId.onEach { id ->
             if (id.isNotBlank()) {
                 db.collection("spaces").document(id).collection("users")
                     .addSnapshotListener { snapshot, _ ->
-                        val map = snapshot?.documents?.associate { 
+                        val namesMap = snapshot?.documents?.associate { 
+                            it.id to (it.getString("name") ?: "Utente")
+                        } ?: emptyMap()
+                        val imagesMap = snapshot?.documents?.associate { 
                             it.id to (it.getString("photoUrl") ?: "")
                         } ?: emptyMap()
-                        _userImages.value = map
+                        _userNames.value = namesMap
+                        _userImages.value = imagesMap
                     }
                 updateUserProfile()
             }
@@ -116,10 +136,17 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setCurrentUserId(name: String) {
-        val trimmedName = name.trim().ifBlank { "Tu" }
-        _currentUserId.value = trimmedName
-        prefs.edit().putString("user_id", trimmedName).apply()
+        // Non facciamo trim o ifBlank qui per permettere la digitazione fluida
+        _currentUserId.value = name
+        prefs.edit().putString("user_id", name).apply()
         updateUserProfile()
+    }
+
+    // Funzione chiamata quando si esce dalla schermata profilo o si "conferma"
+    fun finalizeName() {
+        if (_currentUserId.value.isBlank()) {
+            setCurrentUserId("Tu")
+        }
     }
 
     fun setProfileImage(uri: String) {
@@ -138,27 +165,23 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
             val context = getApplication<Application>().applicationContext
             val inputStream = context.contentResolver.openInputStream(Uri.parse(uriString))
             val originalBitmap = BitmapFactory.decodeStream(inputStream)
-            
-            // Ridimensiona a 120x120 per stare sotto i limiti di Firestore e non rallentare
             val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 120, 120, true)
             val outputStream = ByteArrayOutputStream()
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
             val byteArray = outputStream.toByteArray()
-            
             "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
-        } catch (e: Exception) {
-            null
-        }
+        } catch (e: Exception) { null }
     }
 
     private fun updateUserProfile() {
-        val id = _spaceId.value
-        val name = _currentUserId.value
+        val spaceId = _spaceId.value
+        val userId = _userId.value
+        val name = _currentUserId.value.ifBlank { "Tu" }
         val photo = _profileImage.value
-        if (id.isNotBlank() && name.isNotBlank() && name != "Tu") {
+        if (spaceId.isNotBlank() && userId.isNotBlank()) {
             viewModelScope.launch {
-                db.collection("spaces").document(id).collection("users").document(name)
-                    .set(mapOf("name" to name, "photoUrl" to photo))
+                db.collection("spaces").document(spaceId).collection("users").document(userId)
+                    .set(mapOf("name" to name, "photoUrl" to photo, "lastUpdate" to System.currentTimeMillis()))
             }
         }
     }
@@ -187,12 +210,8 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
                 if (exists) {
                     setSpaceId(trimmedId)
                     _errorMessage.value = null
-                } else {
-                    _errorMessage.value = "Gruppo non trovato"
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Errore connessione: ${e.message}"
-            }
+                } else { _errorMessage.value = "Gruppo non trovato" }
+            } catch (e: Exception) { _errorMessage.value = "Errore connessione: ${e.message}" }
         }
     }
 
@@ -205,17 +224,17 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     fun setSortOrder(order: SortOrder) { _sortOrder.value = order }
 
     // Activities
-    fun addActivity(activity: Activity) { viewModelScope.launch { repository?.addActivity(activity.copy(creatorId = _currentUserId.value)) } }
+    fun addActivity(activity: Activity) { viewModelScope.launch { repository?.addActivity(activity.copy(creatorId = _userId.value)) } }
     fun updateActivity(activity: Activity) { viewModelScope.launch { repository?.updateActivity(activity) } }
     fun deleteActivity(id: String) { viewModelScope.launch { repository?.deleteActivity(id) } }
     fun toggleParticipation(activity: Activity) {
-        val newList = if (activity.participants.contains(_currentUserId.value)) activity.participants - _currentUserId.value else activity.participants + _currentUserId.value
+        val newList = if (activity.participants.contains(_userId.value)) activity.participants - _userId.value else activity.participants + _userId.value
         viewModelScope.launch { repository?.updateActivity(activity.copy(participants = newList)) }
     }
     fun markActivityAsDone(activity: Activity) { viewModelScope.launch { repository?.updateActivity(activity.copy(status = ActivityStatus.DONE)) } }
 
     // Media
-    fun addMediaItem(item: MediaItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addMediaItem(item.copy(creatorId = _currentUserId.value)) } }
+    fun addMediaItem(item: MediaItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addMediaItem(item.copy(creatorId = _userId.value)) } }
     fun updateMediaItem(item: MediaItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateMediaItem(item) } }
     fun deleteMediaItem(id: String) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).deleteMediaItem(id) } }
     fun toggleMediaStatus(item: MediaItem) {
@@ -223,12 +242,12 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateMediaItem(item.copy(status = newStatus)) }
     }
     fun toggleMediaParticipation(item: MediaItem) {
-        val newList = if (item.participants.contains(_currentUserId.value)) item.participants - _currentUserId.value else item.participants + _currentUserId.value
+        val newList = if (item.participants.contains(_userId.value)) item.participants - _userId.value else item.participants + _userId.value
         viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateMediaItem(item.copy(participants = newList)) }
     }
 
     // Games
-    fun addGame(item: GameItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addGame(item.copy(creatorId = _currentUserId.value)) } }
+    fun addGame(item: GameItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addGame(item.copy(creatorId = _userId.value)) } }
     fun updateGame(item: GameItem) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateGame(item) } }
     fun deleteGame(id: String) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).deleteGame(id) } }
     fun toggleGameStatus(item: GameItem) {
@@ -236,12 +255,12 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateGame(item.copy(status = newStatus)) }
     }
     fun toggleGameParticipation(item: GameItem) {
-        val newList = if (item.participants.contains(_currentUserId.value)) item.participants - _currentUserId.value else item.participants + _currentUserId.value
+        val newList = if (item.participants.contains(_userId.value)) item.participants - _userId.value else item.participants + _userId.value
         viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateGame(item.copy(participants = newList)) }
     }
 
     // Wishlist
-    fun addWishlistItem(title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addWishlistItem(WishlistItem(title = title, link = link, ownerId = _currentUserId.value)) } }
-    fun updateWishlistItem(id: String, title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateWishlistItem(WishlistItem(id = id, title = title, link = link, ownerId = _currentUserId.value)) } }
+    fun addWishlistItem(title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).addWishlistItem(WishlistItem(title = title, link = link, ownerId = _userId.value)) } }
+    fun updateWishlistItem(id: String, title: String, link: String?) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).updateWishlistItem(WishlistItem(id = id, title = title, link = link, ownerId = _userId.value)) } }
     fun deleteWishlistItem(id: String) { viewModelScope.launch { (repository ?: FirestoreRepositoryImpl(db, _spaceId.value)).deleteWishlistItem(id) } }
 }

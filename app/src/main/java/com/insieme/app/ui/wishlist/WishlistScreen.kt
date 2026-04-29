@@ -39,26 +39,26 @@ fun WishlistScreen(
     onNavigateToProfile: () -> Unit
 ) {
     val items by viewModel.sharedWishlist.collectAsState()
-    val participants by viewModel.allParticipantNames.collectAsState()
+    val participantIds by viewModel.participantIds.collectAsState()
+    val idToName by viewModel.idToName.collectAsState()
     val spaceId by viewModel.spaceId.collectAsState()
-    val currentUserId by viewModel.currentUserId.collectAsState()
+    val currentUserId by viewModel.userId.collectAsState()
     val userImages by viewModel.userImages.collectAsState()
     
-    // "Tutti" sarà il valore speciale per vedere tutto
-    var selectedParticipant by remember { mutableStateOf("Tutti") }
+    var selectedParticipantId by remember { mutableStateOf("Tutti") }
     var showCreateDialog by remember { mutableStateOf(false) }
     var itemToEdit by remember { mutableStateOf<WishlistItem?>(null) }
     var zoomImageUrl by remember { mutableStateOf<String?>(null) }
 
-    val pastelPink = Color(0xFFFFF5F8)
     val deepPink = Color(0xFFF48FB1)
 
-    val participantList = listOf("Tutti") + participants.toList().sortedBy { if (it == currentUserId) 0 else 1 }
+    // Ordiniamo gli ID: prima io, poi gli altri
+    val participantIdList = listOf("Tutti") + participantIds.toList().sortedBy { if (it == currentUserId) 0 else 1 }
     
-    val filteredItems = if (selectedParticipant == "Tutti") {
+    val filteredItems = if (selectedParticipantId == "Tutti") {
         items
     } else {
-        items.filter { it.ownerId == selectedParticipant }
+        items.filter { it.ownerId == selectedParticipantId }
     }
 
     if (showCreateDialog) {
@@ -108,13 +108,13 @@ fun WishlistScreen(
 
             if (spaceId.isNotBlank()) {
                 ScrollableTabRow(
-                    selectedTabIndex = participantList.indexOf(selectedParticipant).coerceAtLeast(0),
+                    selectedTabIndex = participantIdList.indexOf(selectedParticipantId).coerceAtLeast(0),
                     containerColor = Color.White,
                     contentColor = deepPink,
                     edgePadding = 24.dp,
                     divider = {},
                     indicator = { tabPositions ->
-                        val index = participantList.indexOf(selectedParticipant).coerceAtLeast(0)
+                        val index = participantIdList.indexOf(selectedParticipantId).coerceAtLeast(0)
                         if (index < tabPositions.size) {
                             TabRowDefaults.Indicator(
                                 Modifier.tabIndicatorOffset(tabPositions[index]),
@@ -123,16 +123,16 @@ fun WishlistScreen(
                         }
                     }
                 ) {
-                    participantList.forEach { name ->
+                    participantIdList.forEach { id ->
                         Tab(
-                            selected = selectedParticipant == name,
-                            onClick = { selectedParticipant = name },
+                            selected = selectedParticipantId == id,
+                            onClick = { selectedParticipantId = id },
                             text = { 
                                 Text(
-                                    when(name) {
+                                    when(id) {
                                         "Tutti" -> "Tutti"
                                         currentUserId -> "Miei"
-                                        else -> name
+                                        else -> idToName[id] ?: "Utente"
                                     }, 
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp
@@ -172,6 +172,7 @@ fun WishlistScreen(
                             currentUserId = currentUserId, 
                             color = deepPink,
                             ownerImage = userImages[item.ownerId],
+                            ownerName = idToName[item.ownerId] ?: "Utente",
                             onDelete = { viewModel.deleteWishlistItem(item.id) },
                             onEdit = { itemToEdit = item },
                             onZoom = { zoomImageUrl = item.imageUrl }
@@ -190,7 +191,7 @@ fun WishlistScreen(
 }
 
 @Composable
-fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, ownerImage: String?, onDelete: () -> Unit, onEdit: () -> Unit, onZoom: () -> Unit) {
+fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, ownerImage: String?, ownerName: String, onDelete: () -> Unit, onEdit: () -> Unit, onZoom: () -> Unit) {
     val context = LocalContext.current
     
     Card(
@@ -231,7 +232,6 @@ fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, ownerI
                     Text("🛍️", fontSize = 40.sp)
                 }
                 
-                // Avatar del proprietario se siamo in vista "Tutti"
                 Surface(
                     modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).size(24.dp),
                     shape = CircleShape,
@@ -241,7 +241,7 @@ fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, ownerI
                         AsyncImage(model = ownerImage, contentDescription = null, contentScale = ContentScale.Crop)
                     } else {
                         Box(modifier = Modifier.background(color.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
-                            Text(item.ownerId.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = color)
+                            Text(ownerName.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = color)
                         }
                     }
                 }
@@ -253,20 +253,10 @@ fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, ownerI
                             .padding(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        IconButton(
-                            onClick = onEdit,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .background(Color.White.copy(alpha = 0.7f), CircleShape)
-                        ) {
+                        IconButton(onClick = onEdit, modifier = Modifier.size(28.dp).background(Color.White.copy(alpha = 0.7f), CircleShape)) {
                             Icon(Icons.Default.Edit, null, tint = Color.Gray, modifier = Modifier.size(14.dp))
                         }
-                        IconButton(
-                            onClick = onDelete,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .background(Color.White.copy(alpha = 0.7f), CircleShape)
-                        ) {
+                        IconButton(onClick = onDelete, modifier = Modifier.size(28.dp).background(Color.White.copy(alpha = 0.7f), CircleShape)) {
                             Icon(Icons.Default.Delete, null, tint = Color.Red, modifier = Modifier.size(14.dp))
                         }
                     }

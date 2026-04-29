@@ -1,12 +1,10 @@
 package com.insieme.app.ui.activities
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -37,25 +34,21 @@ fun ActivitiesScreen(
     viewModel: InsiemeViewModel,
     onNavigateToProfile: () -> Unit
 ) {
+    val activities by viewModel.activities.collectAsState()
+    val spaceId by viewModel.spaceId.collectAsState()
+    val userId by viewModel.userId.collectAsState()
+    val groupSize by viewModel.groupSize.collectAsState()
+    val userImages by viewModel.userImages.collectAsState()
+    val idToName by viewModel.idToName.collectAsState()
+    val sortOrder by viewModel.sortOrder.collectAsState()
+
     var showCreateDialog by remember { mutableStateOf(false) }
     var activityToEdit by remember { mutableStateOf<Activity?>(null) }
     
-    val activities by viewModel.activities.collectAsState()
-    val spaceId by viewModel.spaceId.collectAsState()
-    val currentUserId by viewModel.currentUserId.collectAsState()
-    val groupSize by viewModel.groupSize.collectAsState()
-    val currentSort by viewModel.sortOrder.collectAsState()
-    val userImages by viewModel.userImages.collectAsState()
-
-    val pastelGreen = Color(0xFFF9FBF9)
     val deepGreen = Color(0xFFA5D6A7)
 
     val todoActivities = activities.filter { it.status == ActivityStatus.TODO }
     val doneActivities = activities.filter { it.status == ActivityStatus.DONE }
-
-    val homeActivities = todoActivities.filter { it.isAtHome }
-    val awayActivitiesGrouped = todoActivities.filter { !it.isAtHome }
-        .groupBy { it.locationDetail.trim().lowercase().ifBlank { "fuori casa" } }
 
     if (showCreateDialog) {
         ActivityDialog(
@@ -81,33 +74,37 @@ fun ActivitiesScreen(
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 8.dp),
+                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Facciamo qualcosa!",
+                    "Andiamo?",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = (-1).sp
                     ),
                     modifier = Modifier.weight(1f)
                 )
-                FlowerIcon(modifier = Modifier.size(36.dp), color = deepGreen)
-            }
-
-            if (spaceId.isNotBlank()) {
-                LazyRow(
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item { SortChip("Tutti", currentSort == SortOrder.DEFAULT, deepGreen) { viewModel.setSortOrder(SortOrder.DEFAULT) } }
-                    item { SortChip("Costo", currentSort == SortOrder.COST, deepGreen) { viewModel.setSortOrder(SortOrder.COST) } }
-                    item { SortChip("Durata", currentSort == SortOrder.DURATION, deepGreen) { viewModel.setSortOrder(SortOrder.DURATION) } }
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FilterChip(
+                        selected = sortOrder == SortOrder.COST,
+                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.COST) SortOrder.DEFAULT else SortOrder.COST) },
+                        label = { Icon(Icons.Default.AttachMoney, null, modifier = Modifier.size(16.dp)) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilterChip(
+                        selected = sortOrder == SortOrder.DURATION,
+                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.DURATION) SortOrder.DEFAULT else SortOrder.DURATION) },
+                        label = { Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(16.dp)) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f))
+                    )
                 }
             }
 
             LazyColumn(
-                contentPadding = PaddingValues(24.dp, 16.dp, 24.dp, 100.dp),
+                contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (spaceId.isBlank()) {
@@ -118,15 +115,15 @@ fun ActivitiesScreen(
                         )
                     }
                 } else {
-                    if (homeActivities.isNotEmpty()) {
-                        item { SectionHeader("In casa", Icons.Default.Home, deepGreen) }
-                        items(homeActivities, key = { "home_${it.id}_${homeActivities.indexOf(it)}" }) { activity ->
+                    if (todoActivities.isNotEmpty()) {
+                        items(todoActivities, key = { it.id }) { activity ->
                             ActivityCard(
-                                activity = activity, 
-                                currentUserId = currentUserId, 
-                                groupSize = groupSize, 
+                                activity = activity,
+                                currentUserId = userId,
+                                groupSize = groupSize,
                                 primaryColor = deepGreen,
                                 userImages = userImages,
+                                idToName = idToName,
                                 onVote = { viewModel.toggleParticipation(activity) },
                                 onDone = { viewModel.markActivityAsDone(activity) },
                                 onDelete = { viewModel.deleteActivity(activity.id) },
@@ -135,36 +132,13 @@ fun ActivitiesScreen(
                         }
                     }
 
-                    if (awayActivitiesGrouped.isNotEmpty()) {
-                        item { 
-                            Spacer(modifier = Modifier.height(8.dp))
-                            SectionHeader("Fuori casa", Icons.Default.LocationOn, Color(0xFFA1887F)) 
-                        }
-                        awayActivitiesGrouped.forEach { (location, list) ->
-                            item { SubSectionHeader(location.replaceFirstChar { it.uppercase() }) }
-                            items(list, key = { "away_${it.id}_${list.indexOf(it)}" }) { activity ->
-                                ActivityCard(
-                                    activity = activity, 
-                                    currentUserId = currentUserId, 
-                                    groupSize = groupSize, 
-                                    primaryColor = Color(0xFFA1887F),
-                                    userImages = userImages,
-                                    onVote = { viewModel.toggleParticipation(activity) },
-                                    onDone = { viewModel.markActivityAsDone(activity) },
-                                    onDelete = { viewModel.deleteActivity(activity.id) },
-                                    onEdit = { activityToEdit = activity }
-                                )
-                            }
-                        }
-                    }
-
                     if (doneActivities.isNotEmpty()) {
                         item {
                             Spacer(modifier = Modifier.height(24.dp))
-                            SectionHeader("Fatte", Icons.Default.CheckCircle, Color.LightGray)
+                            Text("Già fatte", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray))
                         }
-                        items(doneActivities, key = { "done_${it.id}_${doneActivities.indexOf(it)}" }) { activity ->
-                            DoneActivityCard(activity, deepGreen) { viewModel.toggleParticipation(activity) }
+                        items(doneActivities, key = { it.id }) { activity ->
+                            DoneActivityCard(activity, deepGreen) { viewModel.updateActivity(activity.copy(status = ActivityStatus.TODO)) }
                         }
                     }
                 }
@@ -186,44 +160,13 @@ fun ActivitiesScreen(
 }
 
 @Composable
-fun SortChip(label: String, isSelected: Boolean, color: Color, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.clickable { onClick() },
-        color = if (isSelected) color else color.copy(alpha = 0.05f),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Text(
-            label, 
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                color = if (isSelected) Color.White else color
-            )
-        )
-    }
-}
-
-@Composable
-fun SectionHeader(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-        Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = color))
-    }
-}
-
-@Composable
-fun SubSectionHeader(title: String) {
-    Text(title, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, color = Color.Gray, letterSpacing = 1.sp), modifier = Modifier.padding(start = 28.dp, top = 8.dp, bottom = 4.dp))
-}
-
-@Composable
 fun ActivityCard(
-    activity: Activity, 
-    currentUserId: String, 
-    groupSize: Int, 
+    activity: Activity,
+    currentUserId: String,
+    groupSize: Int,
     primaryColor: Color,
     userImages: Map<String, String>,
+    idToName: Map<String, String>,
     onVote: () -> Unit,
     onDone: () -> Unit,
     onDelete: () -> Unit,
@@ -242,11 +185,7 @@ fun ActivityCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(activity.title, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CategoryTag("€${activity.budget}", primaryColor.copy(alpha = 0.1f), primaryColor)
-                        CategoryTag(activity.time, primaryColor.copy(alpha = 0.1f), primaryColor)
-                    }
+                    Text("${activity.budget}€ • ${activity.time}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -264,11 +203,12 @@ fun ActivityCard(
                     }
                 }
             }
+            
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(modifier = Modifier.weight(1f)) {
-                    activity.participants.forEach { name -> 
-                        ParticipantAvatar(name, userImages[name]) 
+                    activity.participants.forEach { id -> 
+                        ParticipantAvatar(idToName[id] ?: "Utente", userImages[id]) 
                     }
                 }
                 
@@ -290,22 +230,15 @@ fun ActivityCard(
 @Composable
 fun ParticipantAvatar(name: String, imageUrl: String?) {
     Surface(
-        modifier = Modifier.size(32.dp).offset(x = (-4).dp), 
-        shape = CircleShape, 
-        color = Color(0xFFF5F5F5), 
-        border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
-        shadowElevation = 1.dp
+        modifier = Modifier.size(28.dp).offset(x = 0.dp).clip(CircleShape),
+        color = Color.LightGray.copy(alpha = 0.2f),
+        border = androidx.compose.foundation.BorderStroke(2.dp, Color.White)
     ) {
-        Box(contentAlignment = Alignment.Center) { 
-            if (!imageUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = name,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Text(name.take(1).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.Gray) 
+        if (!imageUrl.isNullOrBlank()) {
+            AsyncImage(model = imageUrl, contentDescription = name, contentScale = ContentScale.Crop)
+        } else {
+            Box(contentAlignment = Alignment.Center) {
+                Text(name.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -320,12 +253,5 @@ fun DoneActivityCard(activity: Activity, primaryColor: Color, onUndo: () -> Unit
             Text(activity.title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium.copy(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough))
             Icon(Icons.Default.Refresh, null, tint = Color.LightGray, modifier = Modifier.size(16.dp))
         }
-    }
-}
-
-@Composable
-fun CategoryTag(text: String, bgColor: Color, textColor: Color) {
-    Surface(color = bgColor, shape = RoundedCornerShape(10.dp)) {
-        Text(text, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp, color = textColor))
     }
 }
