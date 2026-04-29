@@ -25,7 +25,7 @@ fun MediaDialog(
     var title by remember { mutableStateOf(item?.title ?: "") }
     var selectedType by remember { mutableStateOf(item?.type ?: MediaType.FILM) }
     
-    val deepBeige = Color(0xFF8D6E63)
+    val deepBeige = Color(0xFFBCB1A1)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(

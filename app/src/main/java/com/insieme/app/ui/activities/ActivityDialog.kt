@@ -31,7 +31,7 @@ fun ActivityDialog(
     var error by remember { mutableStateOf<String?>(null) }
 
     val pastelGreen = Color(0xFFE8F5E9)
-    val deepGreen = Color(0xFF2E7D32)
+    val deepGreen = Color(0xFFA5D6A7)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -98,10 +98,15 @@ fun ActivityDialog(
 
                 OutlinedTextField(
                     value = budget,
-                    onValueChange = { budget = it },
+                    onValueChange = { input ->
+                        if (input.all { it.isDigit() || it == '.' }) {
+                            budget = input
+                        }
+                    },
                     label = { Text("Budget stimato (€)") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = deepGreen, focusedLabelColor = deepGreen)
                 )
 

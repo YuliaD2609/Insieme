@@ -62,7 +62,7 @@ class GroupCodeTransformation : VisualTransformation {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(viewModel: InsiemeViewModel) {
-    var userName by remember { mutableStateOf("Tu") }
+    val currentUserId by viewModel.currentUserId.collectAsState()
     val spaceId by viewModel.spaceId.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     val profileImage by viewModel.profileImage.collectAsState()
@@ -124,7 +124,7 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        Text(userName.take(1).uppercase(), fontSize = 52.sp, fontWeight = FontWeight.Bold, color = yellowColor)
+                        Text(currentUserId.take(1).uppercase(), fontSize = 52.sp, fontWeight = FontWeight.Bold, color = yellowColor)
                     }
                 }
             }
@@ -144,9 +144,8 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = userName,
+            value = currentUserId,
             onValueChange = { 
-                userName = it 
                 viewModel.setCurrentUserId(it)
             },
             label = { Text("Il tuo nome") },

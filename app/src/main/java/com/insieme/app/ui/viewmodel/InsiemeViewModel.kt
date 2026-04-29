@@ -1,6 +1,8 @@
 package com.insieme.app.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.insieme.app.data.model.*
 import com.insieme.app.data.repository.FirestoreRepositoryImpl
@@ -13,16 +15,17 @@ import kotlinx.coroutines.tasks.await
 
 enum class SortOrder { DEFAULT, COST, DURATION }
 
-class InsiemeViewModel : ViewModel() {
+class InsiemeViewModel(application: Application) : AndroidViewModel(application) {
     private val db = Firebase.firestore
+    private val prefs = application.getSharedPreferences("insieme_prefs", Context.MODE_PRIVATE)
     
-    private val _spaceId = MutableStateFlow("")
+    private val _spaceId = MutableStateFlow(prefs.getString("space_id", "") ?: "")
     val spaceId: StateFlow<String> = _spaceId
 
-    private val _currentUserId = MutableStateFlow("Tu")
+    private val _currentUserId = MutableStateFlow(prefs.getString("user_id", "Tu") ?: "Tu")
     val currentUserId: StateFlow<String> = _currentUserId
 
-    private val _profileImage = MutableStateFlow<String?>(null)
+    private val _profileImage = MutableStateFlow<String?>(prefs.getString("profile_image", null))
     val profileImage: StateFlow<String?> = _profileImage
 
     private val _userImages = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -33,13 +36,30 @@ class InsiemeViewModel : ViewModel() {
 
     private var repository: InsiemeRepository? = null
 
-    val activities = _spaceId.flatMapLatest { id ->
-        if (id.isBlank()) flowOf(emptyList())
-        else {
-            repository = FirestoreRepositoryImpl(db, id)
-            repository!!.getActivities()
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _sortOrder = MutableStateFlow(SortOrder.DEFAULT)
+    val sortOrder: StateFlow<SortOrder> = _sortOrder
+
+    val activities = combine(_spaceId, _sortOrder) { id, order -> id to order }
+        .flatMapLatest { (id, order) ->
+            if (id.isBlank()) flowOf(emptyList())
+            else {
+                repository = FirestoreRepositoryImpl(db, id)
+                repository!!.getActivities().map { list ->
+                    when (order) {
+                        SortOrder.COST -> list.sortedBy { it.budget }
+                        SortOrder.DURATION -> list.sortedBy { 
+                            when(it.time) {
+                                "Breve" -> 1
+                                "Media" -> 2
+                                "Lunga" -> 3
+                                else -> 4
+                            }
+                        }
+                        else -> list
+                    }
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val mediaItems = _spaceId.flatMapLatest { id ->
         if (id.isBlank()) flowOf(emptyList())
@@ -62,9 +82,6 @@ class InsiemeViewModel : ViewModel() {
 
     val groupSize = allParticipantNames.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
 
-    private val _sortOrder = MutableStateFlow(SortOrder.DEFAULT)
-    val sortOrder: StateFlow<SortOrder> = _sortOrder
-
     init {
         // Observe users to get profile images
         _spaceId.onEach { id ->
@@ -82,16 +99,19 @@ class InsiemeViewModel : ViewModel() {
 
     fun setSpaceId(id: String) {
         _spaceId.value = id
+        prefs.edit().putString("space_id", id).apply()
         updateUserProfile()
     }
 
     fun setCurrentUserId(name: String) {
         _currentUserId.value = name
+        prefs.edit().putString("user_id", name).apply()
         updateUserProfile()
     }
 
     fun setProfileImage(uri: String) {
         _profileImage.value = uri
+        prefs.edit().putString("profile_image", uri).apply()
         updateUserProfile()
     }
 

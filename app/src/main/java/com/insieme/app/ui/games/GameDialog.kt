@@ -23,7 +23,7 @@ fun GameDialog(
 ) {
     var title by remember { mutableStateOf(item?.title ?: "") }
     
-    val deepBlue = Color(0xFF0288D1)
+    val deepBlue = Color(0xFF90CAF9)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(

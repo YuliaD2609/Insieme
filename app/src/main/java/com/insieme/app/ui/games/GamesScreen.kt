@@ -57,7 +57,7 @@ fun GamesScreen(
 
     if (itemToEdit != null) {
         GameDialog(
-            game = itemToEdit,
+            item = itemToEdit,
             onDismiss = { itemToEdit = null },
             onSave = { updatedItem ->
                 viewModel.updateGame(updatedItem)
