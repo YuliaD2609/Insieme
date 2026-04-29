@@ -43,7 +43,6 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     private val _spaceId = MutableStateFlow(prefs.getString("space_id", "") ?: "")
     val spaceId: StateFlow<String> = _spaceId
 
-    // Permettiamo che sia vuoto durante la digitazione
     private val _currentUserId = MutableStateFlow(prefs.getString("user_id", "Tu") ?: "Tu")
     val currentUserId: StateFlow<String> = _currentUserId
 
@@ -136,13 +135,11 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setCurrentUserId(name: String) {
-        // Non facciamo trim o ifBlank qui per permettere la digitazione fluida
         _currentUserId.value = name
         prefs.edit().putString("user_id", name).apply()
         updateUserProfile()
     }
 
-    // Funzione chiamata quando si esce dalla schermata profilo o si "conferma"
     fun finalizeName() {
         if (_currentUserId.value.isBlank()) {
             setCurrentUserId("Tu")
@@ -169,7 +166,8 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
             val outputStream = ByteArrayOutputStream()
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
             val byteArray = outputStream.toByteArray()
-            "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
+            // Restituiamo solo la stringa base64 pura per coerenza
+            Base64.encodeToString(byteArray, Base64.NO_WRAP)
         } catch (e: Exception) { null }
     }
 
@@ -184,6 +182,16 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
                     .set(mapOf("name" to name, "photoUrl" to photo, "lastUpdate" to System.currentTimeMillis()))
             }
         }
+    }
+
+    // Helper per le immagini in UI
+    fun decodeImage(base64: String?): ByteArray? {
+        if (base64.isNullOrBlank()) return null
+        return try {
+            // Se contiene il prefisso lo togliamo
+            val pureBase64 = if (base64.contains(",")) base64.substringAfter(",") else base64
+            Base64.decode(pureBase64, Base64.DEFAULT)
+        } catch (e: Exception) { null }
     }
 
     fun createSpace() {
