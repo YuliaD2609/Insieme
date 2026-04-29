@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +26,7 @@ import com.insieme.app.data.model.ActivityStatus
 import com.insieme.app.ui.components.FlowerIcon
 import com.insieme.app.ui.components.GroupWarningCard
 import com.insieme.app.ui.viewmodel.InsiemeViewModel
+import com.insieme.app.ui.viewmodel.SortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,27 +40,26 @@ fun ActivitiesScreen(
     val groupSize by viewModel.groupSize.collectAsState()
     val userImages by viewModel.userImages.collectAsState()
     val idToName by viewModel.idToName.collectAsState()
+    val sortOrder by viewModel.sortOrder.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var activityToEdit by remember { mutableStateOf<Activity?>(null) }
-    var selectedTabIndex by remember { mutableStateOf(0) } // 0 = Casa, 1 = Fuori
     
     val deepGreen = Color(0xFFA5D6A7)
-    val locations = listOf("Casa", "Fuori")
 
-    val filteredActivities = activities.filter { 
-        if (selectedTabIndex == 0) it.isAtHome else !it.isAtHome 
-    }
-    
-    val todoActivities = filteredActivities.filter { it.status == ActivityStatus.TODO }
-    val doneActivities = filteredActivities.filter { it.status == ActivityStatus.DONE }
+    val todoActivities = activities.filter { it.status == ActivityStatus.TODO }
+    val doneActivities = activities.filter { it.status == ActivityStatus.DONE }
+
+    // Raggruppamento
+    val homeActivities = todoActivities.filter { it.isAtHome }
+    val awayActivities = todoActivities.filter { !it.isAtHome }
+        .groupBy { it.locationDetail.trim().lowercase() }
 
     if (showCreateDialog) {
         ActivityDialog(
             onDismiss = { showCreateDialog = false },
             onSave = { newActivity ->
-                // Assicuriamoci che il nuovo elemento abbia il luogo corretto basato sul tab selezionato
-                viewModel.addActivity(newActivity.copy(isAtHome = selectedTabIndex == 0))
+                viewModel.addActivity(newActivity)
                 showCreateDialog = false
             }
         )
@@ -80,7 +79,7 @@ fun ActivitiesScreen(
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 8.dp),
+                modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -91,34 +90,26 @@ fun ActivitiesScreen(
                     ),
                     modifier = Modifier.weight(1f)
                 )
-                FlowerIcon(modifier = Modifier.size(36.dp), color = deepGreen)
-            }
-
-            if (spaceId.isNotBlank()) {
-                TabRow(
-                    selectedTabIndex = selectedTabIndex,
-                    containerColor = Color.White,
-                    contentColor = deepGreen,
-                    divider = {},
-                    indicator = { tabPositions ->
-                        TabRowDefaults.Indicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                            color = deepGreen
-                        )
-                    }
-                ) {
-                    locations.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            onClick = { selectedTabIndex = index },
-                            text = { Text(title, fontWeight = FontWeight.Bold) }
-                        )
-                    }
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FilterChip(
+                        selected = sortOrder == SortOrder.COST,
+                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.COST) SortOrder.DEFAULT else SortOrder.COST) },
+                        label = { Icon(Icons.Default.AttachMoney, null, modifier = Modifier.size(16.dp)) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilterChip(
+                        selected = sortOrder == SortOrder.DURATION,
+                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.DURATION) SortOrder.DEFAULT else SortOrder.DURATION) },
+                        label = { Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(16.dp)) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f))
+                    )
                 }
             }
 
             LazyColumn(
-                contentPadding = PaddingValues(24.dp, 16.dp, 24.dp, 100.dp),
+                contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (spaceId.isBlank()) {
@@ -129,14 +120,12 @@ fun ActivitiesScreen(
                         )
                     }
                 } else {
-                    if (todoActivities.isEmpty() && doneActivities.isEmpty()) {
+                    // SEZIONE CASA
+                    if (homeActivities.isNotEmpty()) {
                         item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                                Text("Nessuna attività qui...", color = Color.LightGray)
-                            }
+                            SectionHeader("In Casa", deepGreen)
                         }
-                    } else {
-                        items(todoActivities, key = { it.id }) { activity ->
+                        items(homeActivities, key = { it.id }) { activity ->
                             ActivityCard(
                                 activity = activity,
                                 currentUserId = userId,
@@ -150,15 +139,49 @@ fun ActivitiesScreen(
                                 onEdit = { activityToEdit = activity }
                             )
                         }
+                    }
 
-                        if (doneActivities.isNotEmpty()) {
+                    // SEZIONE FUORI (raggruppata per luogo)
+                    if (awayActivities.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            SectionHeader("Fuori Casa", deepGreen)
+                        }
+                        
+                        awayActivities.forEach { (locationName, list) ->
                             item {
-                                Spacer(modifier = Modifier.height(24.dp))
-                                Text("Già fatte", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray))
+                                Text(
+                                    locationName.replaceFirstChar { it.uppercase() },
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = deepGreen.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(start = 8.dp, top = 8.dp)
+                                )
                             }
-                            items(doneActivities, key = { it.id }) { activity ->
-                                DoneActivityCard(activity, deepGreen) { viewModel.updateActivity(activity.copy(status = ActivityStatus.TODO)) }
+                            items(list, key = { it.id }) { activity ->
+                                ActivityCard(
+                                    activity = activity,
+                                    currentUserId = userId,
+                                    groupSize = groupSize,
+                                    primaryColor = deepGreen,
+                                    userImages = userImages,
+                                    idToName = idToName,
+                                    onVote = { viewModel.toggleParticipation(activity) },
+                                    onDone = { viewModel.markActivityAsDone(activity) },
+                                    onDelete = { viewModel.deleteActivity(activity.id) },
+                                    onEdit = { activityToEdit = activity }
+                                )
                             }
+                        }
+                    }
+
+                    if (doneActivities.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text("Già fatte", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray))
+                        }
+                        items(doneActivities, key = { it.id }) { activity ->
+                            DoneActivityCard(activity, deepGreen) { viewModel.updateActivity(activity.copy(status = ActivityStatus.TODO)) }
                         }
                     }
                 }
@@ -176,6 +199,15 @@ fun ActivitiesScreen(
                 Icon(Icons.Default.Add, contentDescription = "Aggiungi", modifier = Modifier.size(32.dp))
             }
         }
+    }
+}
+
+@Composable
+fun SectionHeader(title: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
+        Surface(color = color, shape = CircleShape, modifier = Modifier.size(8.dp)) {}
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color.Black)
     }
 }
 
