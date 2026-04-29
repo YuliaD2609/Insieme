@@ -124,8 +124,8 @@ fun WishlistCard(item: WishlistItem, currentUserId: String, color: Color, ownerI
 
                 if (item.ownerId == currentUserId) {
                     Row(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = onEdit, modifier = Modifier.size(28.dp).background(Color.White.copy(alpha = 0.7f), CircleShape)) { Icon(Icons.Default.Edit, null, tint = Color.Gray, modifier = Modifier.size(14.dp)) }
-                        IconButton(onClick = onDelete, modifier = Modifier.size(28.dp).background(Color.White.copy(alpha = 0.7f), CircleShape)) { Icon(Icons.Default.Delete, null, tint = Color.Red, modifier = Modifier.size(14.dp)) }
+                        IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) { Icon(Icons.Default.Edit, null, tint = Color.Gray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
+                        IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) { Icon(Icons.Default.Delete, null, tint = Color.Red.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
                     }
                 }
             }
