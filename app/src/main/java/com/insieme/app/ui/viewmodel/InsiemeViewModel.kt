@@ -56,10 +56,18 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _currentSpaceCreatorId = MutableStateFlow<String?>(null)
+    val currentSpaceCreatorId: StateFlow<String?> = _currentSpaceCreatorId
+
     private var repository: InsiemeRepository? = null
 
     private val _sortOrder = MutableStateFlow(SortOrder.DEFAULT)
     val sortOrder: StateFlow<SortOrder> = _sortOrder
+
+    private val _joinedGroups = MutableStateFlow<Set<String>>(
+        prefs.getStringSet("joined_groups", emptySet()) ?: emptySet()
+    )
+    val joinedGroups: StateFlow<Set<String>> = _joinedGroups
 
     val activities = combine(_spaceId, _sortOrder) { id, order -> id to order }
         .flatMapLatest { (id, order) ->
@@ -131,7 +139,66 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
     fun setSpaceId(id: String) {
         _spaceId.value = id
         prefs.edit().putString("space_id", id).apply()
+        
+        if (id.isNotBlank()) {
+            val updatedGroups = _joinedGroups.value + id
+            _joinedGroups.value = updatedGroups
+            prefs.edit().putStringSet("joined_groups", updatedGroups).apply()
+            
+            // Fetch metadata and verify existence
+            viewModelScope.launch {
+                val doc = db.collection("spaces").document(id).get().await()
+                if (doc.exists()) {
+                    _currentSpaceCreatorId.value = doc.getString("creatorId")
+                } else {
+                    // Se non esiste più, lo rimuoviamo dai preferiti
+                    _errorMessage.value = "Questo gruppo non esiste più."
+                    val updatedGroups = _joinedGroups.value - id
+                    _joinedGroups.value = updatedGroups
+                    prefs.edit().putStringSet("joined_groups", updatedGroups).apply()
+                    if (_spaceId.value == id) logout()
+                }
+            }
+        } else {
+            _currentSpaceCreatorId.value = null
+        }
+        
         updateUserProfile()
+    }
+
+    fun leaveSpace(id: String) {
+        viewModelScope.launch {
+            try {
+                // Rimuove l'utente dalla collezione Firestore
+                db.collection("spaces").document(id).collection("users").document(_userId.value).delete().await()
+                
+                // Aggiorna la lista locale
+                val updatedGroups = _joinedGroups.value - id
+                _joinedGroups.value = updatedGroups
+                prefs.edit().putStringSet("joined_groups", updatedGroups).apply()
+                
+                // Se stiamo uscendo dallo spazio corrente, facciamo il logout
+                if (_spaceId.value == id) {
+                    logout()
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Errore durante l'uscita: ${e.message}"
+            }
+        }
+    }
+
+    fun deleteSpacePermanently(id: String) {
+        viewModelScope.launch {
+            try {
+                db.collection("spaces").document(id).delete().await()
+                val updatedGroups = _joinedGroups.value - id
+                _joinedGroups.value = updatedGroups
+                prefs.edit().putStringSet("joined_groups", updatedGroups).apply()
+                if (_spaceId.value == id) logout()
+            } catch (e: Exception) {
+                _errorMessage.value = "Errore eliminazione: ${e.message}"
+            }
+        }
     }
 
     fun setCurrentUserId(name: String) {
@@ -198,7 +265,10 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 val newId = "${(1000..9999).random()}-${(1000..9999).random()}"
-                db.collection("spaces").document(newId).set(mapOf("createdAt" to System.currentTimeMillis())).await()
+                db.collection("spaces").document(newId).set(mapOf(
+                    "createdAt" to System.currentTimeMillis(),
+                    "creatorId" to _userId.value
+                )).await()
                 setSpaceId(newId)
             } catch (e: Exception) {
                 _errorMessage.value = "Errore creazione: ${e.message}"

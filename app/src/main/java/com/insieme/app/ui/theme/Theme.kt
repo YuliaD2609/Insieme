@@ -11,43 +11,62 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Shapes
+import androidx.compose.ui.unit.dp
+
 private val LightColorScheme = lightColorScheme(
     primary = PastelGreen,
-    secondary = LightBrown,
+    secondary = SoftBlue,
     background = BackgroundWhite,
-    surface = NeutralGrey,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
+    surface = Color.White,
+    onPrimary = TextDark,
+    onSecondary = TextDark,
     onBackground = TextDark,
     onSurface = TextDark,
-    tertiary = AccentOrange
+    tertiary = AccentOrange,
+    surfaceVariant = SoftMint
+)
+
+val BubbleShapes = Shapes(
+    extraSmall = RoundedCornerShape(12.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(24.dp),
+    large = RoundedCornerShape(32.dp),
+    extraLarge = RoundedCornerShape(40.dp)
 )
 
 val InsiemeTypography = Typography(
     headlineMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 28.sp,
+        fontSize = 30.sp,
         color = TextDark,
-        letterSpacing = (-0.5).sp
+        letterSpacing = (-1).sp
+    ),
+    titleLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        color = TextDark
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 17.sp,
+        fontSize = 18.sp,
         color = TextDark
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Medium,
-        fontSize = 15.sp,
-        color = TextDark.copy(alpha = 0.8f)
+        fontSize = 16.sp,
+        color = TextDark.copy(alpha = 0.9f)
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
-        fontSize = 12.sp,
-        color = TextDark.copy(alpha = 0.6f)
+        fontSize = 13.sp,
+        color = TextDark.copy(alpha = 0.7f)
     )
 )
 
@@ -59,6 +78,7 @@ fun InsiemeTheme(
     MaterialTheme(
         colorScheme = LightColorScheme,
         typography = InsiemeTypography,
+        shapes = BubbleShapes,
         content = content
     )
 }

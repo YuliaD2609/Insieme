@@ -2,6 +2,7 @@ package com.insieme.app.ui.activities
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +15,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -27,6 +30,9 @@ import com.insieme.app.ui.components.FlowerIcon
 import com.insieme.app.ui.components.GroupWarningCard
 import com.insieme.app.ui.viewmodel.InsiemeViewModel
 import com.insieme.app.ui.viewmodel.SortOrder
+
+import com.insieme.app.ui.theme.*
+import com.insieme.app.ui.components.DuckIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +51,7 @@ fun ActivitiesScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var activityToEdit by remember { mutableStateOf<Activity?>(null) }
     
-    val deepGreen = Color(0xFFA5D6A7)
+    val primaryColor = PastelGreen
 
     val todoActivities = activities.filter { it.status == ActivityStatus.TODO }
     val doneActivities = activities.filter { it.status == ActivityStatus.DONE }
@@ -65,84 +71,255 @@ fun ActivitiesScreen(
         ActivityDialog(activity = activityToEdit, onDismiss = { activityToEdit = null }, onSave = { viewModel.updateActivity(it); activityToEdit = null })
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
+    Box(modifier = Modifier.fillMaxSize().background(BackgroundWhite)) {
+        // Decorative background elements
+        DuckIcon(modifier = Modifier.size(120.dp).align(Alignment.TopEnd).offset(x = 40.dp, y = (-20).dp).alpha(0.1f))
+        FlowerIcon(modifier = Modifier.size(80.dp).align(Alignment.BottomStart).offset(x = (-20).dp, y = 40.dp), color = SoftPink.copy(alpha = 0.2f))
+
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(modifier = Modifier.padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Andiamo?", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold), modifier = Modifier.weight(1f))
+            Row(
+                modifier = Modifier.padding(start = 24.dp, top = 40.dp, end = 24.dp, bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Andiamo?", 
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = TextDark
+                    )
+                    Text(
+                        "Cosa facciamo oggi?", 
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextDark.copy(alpha = 0.5f)
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    FilterChip(selected = sortOrder == SortOrder.COST, onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.COST) SortOrder.DEFAULT else SortOrder.COST) }, label = { Icon(Icons.Default.AttachMoney, null, modifier = Modifier.size(16.dp)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f)))
+                    FilterChip(
+                        selected = sortOrder == SortOrder.COST,
+                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.COST) SortOrder.DEFAULT else SortOrder.COST) },
+                        label = { Text("€", fontWeight = FontWeight.Bold, color = if (sortOrder == SortOrder.COST) TextDark else TextDark.copy(alpha = 0.5f)) },
+                        shape = CircleShape,
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = SoftYellow,
+                            containerColor = Color.White
+                        ),
+                        border = null,
+                        elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    FilterChip(selected = sortOrder == SortOrder.DURATION, onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.DURATION) SortOrder.DEFAULT else SortOrder.DURATION) }, label = { Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(16.dp)) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen.copy(alpha = 0.2f)))
+                    FilterChip(
+                        selected = sortOrder == SortOrder.DURATION,
+                        onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.DURATION) SortOrder.DEFAULT else SortOrder.DURATION) },
+                        label = { Text("⏱", modifier = Modifier.size(18.dp), textAlign = TextAlign.Center) },
+                        shape = CircleShape,
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = SoftBlue,
+                            containerColor = Color.White
+                        ),
+                        border = null,
+                        elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
+                    )
                 }
             }
 
-            LazyColumn(contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 100.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                if (spaceId.isBlank()) { item { GroupWarningCard(primaryColor = deepGreen, onNavigateToProfile = onNavigateToProfile) } }
-                else {
+            LazyColumn(
+                contentPadding = PaddingValues(24.dp, 8.dp, 24.dp, 120.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                if (spaceId.isBlank()) {
+                    item { GroupWarningCard(primaryColor = primaryColor, onNavigateToProfile = onNavigateToProfile) }
+                } else {
                     if (homeActivities.isNotEmpty()) {
-                        item { SectionHeader("In Casa", deepGreen) }
+                        item { SectionHeader("A Casa", SoftPink) }
                         items(homeActivities, key = { it.id }) { activity ->
-                            ActivityCard(activity, userId, groupSize, deepGreen, userImages, idToName, viewModel, onVote = { viewModel.toggleParticipation(activity) }, onDone = { viewModel.markActivityAsDone(activity) }, onDelete = { viewModel.deleteActivity(activity.id) }, onEdit = { activityToEdit = activity })
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn() + expandVertically(),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                ActivityCard(activity, userId, groupSize, SoftPink, userImages, idToName, viewModel, onVote = { viewModel.toggleParticipation(activity) }, onDone = { viewModel.markActivityAsDone(activity) }, onDelete = { viewModel.deleteActivity(activity.id) }, onEdit = { activityToEdit = activity })
+                            }
                         }
                     }
                     if (awayActivities.isNotEmpty()) {
-                        item { Spacer(modifier = Modifier.height(16.dp)); SectionHeader("Fuori Casa", deepGreen) }
+                        item { Spacer(modifier = Modifier.height(8.dp)); SectionHeader("Fuori Casa", SoftBlue) }
                         awayActivities.forEach { (loc, list) ->
-                            item { Text(loc.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelLarge, color = deepGreen.copy(alpha = 0.7f), fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp, top = 8.dp)) }
+                            item { 
+                                Text(
+                                    loc.replaceFirstChar { it.uppercase() }, 
+                                    style = MaterialTheme.typography.labelSmall, 
+                                    color = TextDark.copy(alpha = 0.4f),
+                                    modifier = Modifier.padding(start = 12.dp, bottom = 4.dp)
+                                ) 
+                            }
                             items(list, key = { it.id }) { activity ->
-                                ActivityCard(activity, userId, groupSize, deepGreen, userImages, idToName, viewModel, onVote = { viewModel.toggleParticipation(activity) }, onDone = { viewModel.markActivityAsDone(activity) }, onDelete = { viewModel.deleteActivity(activity.id) }, onEdit = { activityToEdit = activity })
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn() + expandVertically(),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    ActivityCard(activity, userId, groupSize, SoftBlue, userImages, idToName, viewModel, onVote = { viewModel.toggleParticipation(activity) }, onDone = { viewModel.markActivityAsDone(activity) }, onDelete = { viewModel.deleteActivity(activity.id) }, onEdit = { activityToEdit = activity })
+                                }
                             }
                         }
                     }
                     if (doneActivities.isNotEmpty()) {
-                        item { Spacer(modifier = Modifier.height(24.dp)); Text("Già fatte", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.LightGray)) }
-                        items(doneActivities, key = { it.id }) { activity -> DoneActivityCard(activity, deepGreen) { viewModel.updateActivity(activity.copy(status = ActivityStatus.TODO)) } }
+                        item { 
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Text(
+                                "Album dei Ricordi", 
+                                style = MaterialTheme.typography.titleLarge,
+                                color = TextDark.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                "Le avventure già concluse", 
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextDark.copy(alpha = 0.4f)
+                            )
+                        }
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                doneActivities.forEach { activity ->
+                                    DoneActivityCard(activity, SoftPurple) { 
+                                        viewModel.updateActivity(activity.copy(status = ActivityStatus.TODO)) 
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+        
         if (spaceId.isNotBlank()) {
-            FloatingActionButton(onClick = { showCreateDialog = true }, containerColor = deepGreen, contentColor = Color.White, shape = RoundedCornerShape(20.dp), modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp).size(64.dp)) { Icon(Icons.Default.Add, null, modifier = Modifier.size(32.dp)) }
+            FloatingActionButton(
+                onClick = { showCreateDialog = true },
+                containerColor = primaryColor,
+                contentColor = TextDark,
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(32.dp)
+                    .size(72.dp),
+                elevation = FloatingActionButtonDefaults.elevation(8.dp)
+            ) { 
+                Icon(Icons.Default.Add, null, modifier = Modifier.size(36.dp)) 
+            }
         }
     }
 }
 
 @Composable
 fun SectionHeader(title: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
-        Surface(color = color, shape = CircleShape, modifier = Modifier.size(8.dp)) {}
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color, CircleShape)
+        )
         Spacer(modifier = Modifier.width(12.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+        Text(title, style = MaterialTheme.typography.titleLarge)
     }
 }
 
 @Composable
-fun ActivityCard(activity: Activity, currentUserId: String, groupSize: Int, primaryColor: Color, userImages: Map<String, String>, idToName: Map<String, String>, viewModel: InsiemeViewModel, onVote: () -> Unit, onDone: () -> Unit, onDelete: () -> Unit, onEdit: () -> Unit) {
+fun ActivityCard(
+    activity: Activity, 
+    currentUserId: String, 
+    groupSize: Int, 
+    accentColor: Color, 
+    userImages: Map<String, String>, 
+    idToName: Map<String, String>, 
+    viewModel: InsiemeViewModel, 
+    onVote: () -> Unit, 
+    onDone: () -> Unit, 
+    onDelete: () -> Unit, 
+    onEdit: () -> Unit
+) {
     val isParticipating = activity.participants.contains(currentUserId)
     val everyoneAgreed = activity.participants.size >= groupSize
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(32.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-        Column(modifier = Modifier.padding(20.dp)) {
+    
+    val cardColor by animateColorAsState(
+        targetValue = if (isParticipating) accentColor.copy(alpha = 0.15f) else Color.White,
+        label = "card_color"
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(activity.title, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
-                    Text("${activity.budget}€ • ${activity.time}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(
+                        activity.title, 
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TextDark
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("€", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.Gray)
+                        Text(
+                            "${activity.budget} • ", 
+                            style = MaterialTheme.typography.labelSmall, 
+                            color = Color.Gray
+                        )
+                        Text("⏱", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+                        Text(
+                            " ${activity.time}", 
+                            style = MaterialTheme.typography.labelSmall, 
+                            color = Color.Gray
+                        )
+                    }
                 }
+                
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (everyoneAgreed) { IconButton(onClick = onDone, modifier = Modifier.padding(end = 8.dp)) { FlowerIcon(modifier = Modifier.size(32.dp), color = primaryColor) } }
-                    IconButton(onClick = onVote, modifier = Modifier.size(44.dp).background(if (isParticipating) primaryColor else primaryColor.copy(alpha = 0.05f), RoundedCornerShape(14.dp))) { Icon(Icons.Default.Check, null, tint = if (isParticipating) Color.White else primaryColor.copy(alpha = 0.5f), modifier = Modifier.size(20.dp)) }
+                    if (everyoneAgreed) {
+                        IconButton(
+                            onClick = onDone,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .size(48.dp)
+                        ) {
+                            FlowerIcon(modifier = Modifier.size(40.dp), color = accentColor)
+                        }
+                    }
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(if (isParticipating) accentColor else accentColor.copy(alpha = 0.1f))
+                            .clickable { onVote() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            if (isParticipating) Icons.Default.Favorite else Icons.Default.FavoriteBorder, 
+                            null, 
+                            tint = if (isParticipating) Color.White else accentColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Row(modifier = Modifier.weight(1f)) {
+                Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
                     activity.participants.forEach { id -> 
                         ParticipantAvatar(idToName[id] ?: "Utente", userImages[id], viewModel = viewModel) 
                     }
                 }
                 if (activity.creatorId == currentUserId) {
                     Row {
-                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Edit, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
-                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Delete, null, tint = Color.LightGray.copy(alpha = 0.6f), modifier = Modifier.size(16.dp)) }
+                        IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.Edit, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
+                        }
+                        IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.Delete, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
+                        }
                     }
                 }
             }
@@ -151,25 +328,68 @@ fun ActivityCard(activity: Activity, currentUserId: String, groupSize: Int, prim
 }
 
 @Composable
-fun ParticipantAvatar(name: String, imageUrl: String?, viewModel: InsiemeViewModel, size: androidx.compose.ui.unit.Dp = 28.dp) {
-    Surface(modifier = Modifier.size(size).clip(CircleShape), color = Color.LightGray.copy(alpha = 0.2f), border = androidx.compose.foundation.BorderStroke(2.dp, Color.White)) {
+fun ParticipantAvatar(name: String, imageUrl: String?, viewModel: InsiemeViewModel, size: androidx.compose.ui.unit.Dp = 32.dp) {
+    Surface(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(2.dp, BackgroundWhite)
+    ) {
         val decoded = viewModel.decodeImage(imageUrl)
         if (decoded != null) {
             AsyncImage(model = decoded, contentDescription = name, contentScale = ContentScale.Crop)
         } else {
-            Box(contentAlignment = Alignment.Center) { Text(name.take(1).uppercase(), fontSize = (size.value / 2.5).sp, fontWeight = FontWeight.Bold) }
+            Box(
+                modifier = Modifier.fillMaxSize().background(SoftMint.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    name.take(1).uppercase(), 
+                    fontSize = 12.sp, 
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
+            }
         }
     }
 }
 
 @Composable
-fun DoneActivityCard(activity: Activity, primaryColor: Color, onUndo: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().clickable { onUndo() }, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = primaryColor.copy(alpha = 0.05f))) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.CheckCircle, null, tint = primaryColor, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(activity.title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium.copy(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough))
-            Icon(Icons.Default.Refresh, null, tint = Color.LightGray, modifier = Modifier.size(16.dp))
+fun DoneActivityCard(activity: Activity, color: Color, onUndo: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onUndo() },
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(color.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Check, null, tint = color, modifier = Modifier.size(16.dp))
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                activity.title, 
+                modifier = Modifier.weight(1f), 
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextDark.copy(alpha = 0.6f)
+            )
+            Icon(
+                Icons.Default.Check, 
+                null, 
+                tint = TextDark.copy(alpha = 0.2f), 
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

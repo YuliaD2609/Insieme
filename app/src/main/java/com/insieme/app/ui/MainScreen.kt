@@ -26,6 +26,8 @@ import com.insieme.app.ui.profile.ProfileScreen
 import com.insieme.app.ui.viewmodel.InsiemeViewModel
 import com.insieme.app.ui.wishlist.WishlistScreen
 
+import com.insieme.app.ui.theme.*
+
 sealed class Screen(
     val route: String, 
     val title: String, 
@@ -35,23 +37,23 @@ sealed class Screen(
 ) {
     object Activities : Screen(
         "activities", "Andiamo!", Icons.Default.Favorite, 
-        Color(0xFFA5D6A7), Color(0xFFF9FBF9) // Ultra-Pastel Green
+        PastelGreen, BackgroundWhite
     )
     object Media : Screen(
         "media", "Vedere", Icons.Default.PlayArrow, 
-        Color(0xFFBCB1A1), Color(0xFFFDFCFB) // Ultra-Pastel Beige
+        SoftMint, BackgroundWhite
     )
     object Games : Screen(
         "games", "Giochi", Icons.Default.Star, 
-        Color(0xFF90CAF9), Color(0xFFF0F7FF) // Ultra-Pastel Blue
+        SoftBlue, BackgroundWhite
     )
     object Wishlist : Screen(
         "wishlist", "Desideri", Icons.Default.List, 
-        Color(0xFFF48FB1), Color(0xFFFFF5F8) // Ultra-Pastel Pink
+        SoftPink, BackgroundWhite
     )
     object Profile : Screen(
         "profile", "Profilo", Icons.Default.Person, 
-        Color(0xFFFFE082), Color(0xFFFFFFF0) // Ultra-Pastel Yellow
+        SoftYellow, BackgroundWhite
     )
 }
 
