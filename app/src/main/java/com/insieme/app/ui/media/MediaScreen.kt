@@ -51,6 +51,8 @@ fun MediaScreen(
     val primaryColor = SoftMint
 
     val todoMedia = mediaItems.filter { it.status == ActivityStatus.TODO }
+    val todoMovies = todoMedia.filter { it.type == MediaType.FILM }
+    val todoSeries = todoMedia.filter { it.type == MediaType.SERIE_TV }
     val doneMedia = mediaItems.filter { it.status == ActivityStatus.DONE }
 
     if (showCreateDialog) {
@@ -100,14 +102,27 @@ fun MediaScreen(
                 if (spaceId.isBlank()) { 
                     item { GroupWarningCard(primaryColor = primaryColor, onNavigateToProfile = onNavigateToProfile) } 
                 } else {
-                    if (todoMedia.isNotEmpty()) {
-                        items(todoMedia, key = { it.id }) { item ->
+                    if (todoMovies.isNotEmpty()) {
+                        item { SectionHeader("Film", SoftBlue) }
+                        items(todoMovies, key = { it.id }) { item ->
                             AnimatedVisibility(
                                 visible = true,
                                 enter = fadeIn() + expandVertically(),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                MediaCard(item, userId, groupSize, primaryColor, userImages, idToName, viewModel, onVote = { viewModel.toggleMediaParticipation(item) }, onDone = { viewModel.toggleMediaStatus(item) }, onDelete = { viewModel.deleteMediaItem(item.id) }, onEdit = { itemToEdit = item })
+                                MediaCard(item, userId, groupSize, SoftBlue, userImages, idToName, viewModel, onVote = { viewModel.toggleMediaParticipation(item) }, onDone = { viewModel.toggleMediaStatus(item) }, onDelete = { viewModel.deleteMediaItem(item.id) }, onEdit = { itemToEdit = item })
+                            }
+                        }
+                    }
+                    if (todoSeries.isNotEmpty()) {
+                        item { Spacer(modifier = Modifier.height(8.dp)); SectionHeader("Serie TV", AccentOrange) }
+                        items(todoSeries, key = { it.id }) { item ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn() + expandVertically(),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                MediaCard(item, userId, groupSize, AccentOrange, userImages, idToName, viewModel, onVote = { viewModel.toggleMediaParticipation(item) }, onDone = { viewModel.toggleMediaStatus(item) }, onDelete = { viewModel.deleteMediaItem(item.id) }, onEdit = { itemToEdit = item })
                             }
                         }
                     }
@@ -149,6 +164,19 @@ fun MediaScreen(
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(36.dp)) 
             }
         }
+    }
+}
+
+@Composable
+fun SectionHeader(title: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(title, style = MaterialTheme.typography.titleLarge)
     }
 }
 
