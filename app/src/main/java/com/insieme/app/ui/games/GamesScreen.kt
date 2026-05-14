@@ -50,6 +50,8 @@ fun GamesScreen(
     val primaryColor = SoftBlue
 
     val todoGames = games.filter { it.status == ActivityStatus.TODO }
+    val notOwnedGames = todoGames.filter { !it.isOwned }
+    val ownedGames = todoGames.filter { it.isOwned }
     val doneGames = games.filter { it.status == ActivityStatus.DONE }
 
     if (showCreateDialog) {
@@ -99,14 +101,27 @@ fun GamesScreen(
                 if (spaceId.isBlank()) { 
                     item { GroupWarningCard(primaryColor = primaryColor, onNavigateToProfile = onNavigateToProfile) } 
                 } else {
-                    if (todoGames.isNotEmpty()) {
-                        items(todoGames, key = { it.id }) { item ->
+                    if (ownedGames.isNotEmpty()) {
+                        item { SectionHeader("Abbiamo", PastelGreen) }
+                        items(ownedGames, key = { it.id }) { item ->
                             AnimatedVisibility(
                                 visible = true,
                                 enter = fadeIn() + expandVertically(),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                GameCard(item, userId, groupSize, primaryColor, userImages, idToName, viewModel, onVote = { viewModel.toggleGameParticipation(item) }, onDone = { viewModel.toggleGameStatus(item) }, onDelete = { viewModel.deleteGame(item.id) }, onEdit = { itemToEdit = item })
+                                GameCard(item, userId, groupSize, PastelGreen, userImages, idToName, viewModel, onVote = { viewModel.toggleGameParticipation(item) }, onDone = { viewModel.toggleGameStatus(item) }, onDelete = { viewModel.deleteGame(item.id) }, onEdit = { itemToEdit = item })
+                            }
+                        }
+                    }
+                    if (notOwnedGames.isNotEmpty()) {
+                        item { if (ownedGames.isNotEmpty()) Spacer(modifier = Modifier.height(8.dp)); SectionHeader("Non abbiamo", SoftBlue) }
+                        items(notOwnedGames, key = { it.id }) { item ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn() + expandVertically(),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                GameCard(item, userId, groupSize, SoftBlue, userImages, idToName, viewModel, onVote = { viewModel.toggleGameParticipation(item) }, onDone = { viewModel.toggleGameStatus(item) }, onDelete = { viewModel.deleteGame(item.id) }, onEdit = { itemToEdit = item })
                             }
                         }
                     }
@@ -152,6 +167,19 @@ fun GamesScreen(
 }
 
 @Composable
+fun SectionHeader(title: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(title, style = MaterialTheme.typography.titleLarge)
+    }
+}
+
+@Composable
 fun GameCard(
     item: GameItem, 
     currentUserId: String, 
@@ -181,12 +209,25 @@ fun GameCard(
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    item.title, 
-                    modifier = Modifier.weight(1f), 
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = TextDark
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        item.title, 
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TextDark
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        color = if (isParticipating) Color.White.copy(alpha = 0.5f) else accentColor.copy(alpha = 0.1f), 
+                        shape = CircleShape
+                    ) { 
+                        Text(
+                            if (!item.isOwned) "Non abbiamo" else "Abbiamo", 
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), 
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextDark.copy(alpha = 0.6f)
+                        ) 
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (everyoneAgreed) { 
                         IconButton(onClick = onDone, modifier = Modifier.padding(end = 8.dp).size(48.dp)) { 

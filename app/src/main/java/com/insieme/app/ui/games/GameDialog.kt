@@ -1,6 +1,7 @@
 package com.insieme.app.ui.games
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,7 @@ fun GameDialog(
     onSave: (GameItem) -> Unit
 ) {
     var title by remember { mutableStateOf(item?.title ?: "") }
+    var isOwned by remember { mutableStateOf(item?.isOwned ?: false) }
     
     val primaryColor = SoftBlue
 
@@ -73,12 +76,43 @@ fun GameDialog(
                     singleLine = true
                 )
 
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    listOf(false, true).forEach { owned ->
+                        val isSelected = isOwned == owned
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) primaryColor else BackgroundWhite)
+                                .clickable { isOwned = owned }
+                                .border(
+                                    1.dp, 
+                                    if (isSelected) primaryColor else TextDark.copy(alpha = 0.1f), 
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                if (!owned) "Non abbiamo" else "Abbiamo",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (isSelected) TextDark else TextDark.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
                     onClick = {
                         if (title.isNotBlank()) {
-                            onSave(item?.copy(title = title) ?: GameItem(title = title))
+                            onSave(item?.copy(title = title, isOwned = isOwned) ?: GameItem(title = title, isOwned = isOwned))
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),

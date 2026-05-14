@@ -40,6 +40,8 @@ data class GameItem(
     val title: String = "",
     val status: ActivityStatus = ActivityStatus.TODO,
     val creatorId: String = "",
+    @get:PropertyName("owned") @set:PropertyName("owned")
+    var isOwned: Boolean = false,
     val participants: List<String> = emptyList()
 )
 
