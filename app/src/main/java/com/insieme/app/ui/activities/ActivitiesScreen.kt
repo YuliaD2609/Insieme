@@ -71,7 +71,7 @@ fun ActivitiesScreen(
         ActivityDialog(activity = activityToEdit, onDismiss = { activityToEdit = null }, onSave = { viewModel.updateActivity(it); activityToEdit = null })
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundWhite)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Decorative background elements
         DuckIcon(modifier = Modifier.size(120.dp).align(Alignment.TopEnd).offset(x = 40.dp, y = (-20).dp).alpha(0.1f))
         FlowerIcon(modifier = Modifier.size(80.dp).align(Alignment.BottomStart).offset(x = (-20).dp, y = 40.dp), color = SoftPink.copy(alpha = 0.2f))
@@ -85,23 +85,23 @@ fun ActivitiesScreen(
                     Text(
                         "Andiamo?", 
                         style = MaterialTheme.typography.headlineMedium,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         "Cosa facciamo oggi?", 
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDark.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FilterChip(
                         selected = sortOrder == SortOrder.COST,
                         onClick = { viewModel.setSortOrder(if (sortOrder == SortOrder.COST) SortOrder.DEFAULT else SortOrder.COST) },
-                        label = { Text("€", fontWeight = FontWeight.Bold, color = if (sortOrder == SortOrder.COST) TextDark else TextDark.copy(alpha = 0.5f)) },
+                        label = { Text("€", fontWeight = FontWeight.Bold, color = if (sortOrder == SortOrder.COST) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
                         shape = CircleShape,
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = SoftYellow,
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         border = null,
                         elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
@@ -114,7 +114,7 @@ fun ActivitiesScreen(
                         shape = CircleShape,
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = SoftBlue,
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         border = null,
                         elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp)
@@ -148,7 +148,7 @@ fun ActivitiesScreen(
                                 Text(
                                     loc.replaceFirstChar { it.uppercase() }, 
                                     style = MaterialTheme.typography.labelSmall, 
-                                    color = TextDark.copy(alpha = 0.4f),
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                                     modifier = Modifier.padding(start = 12.dp, bottom = 4.dp)
                                 ) 
                             }
@@ -169,12 +169,12 @@ fun ActivitiesScreen(
                             Text(
                                 "Album dei Ricordi", 
                                 style = MaterialTheme.typography.titleLarge,
-                                color = TextDark.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                             )
                             Text(
                                 "Le avventure già concluse", 
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextDark.copy(alpha = 0.4f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                             )
                         }
                         item {
@@ -195,7 +195,7 @@ fun ActivitiesScreen(
             FloatingActionButton(
                 onClick = { showCreateDialog = true },
                 containerColor = primaryColor,
-                contentColor = TextDark,
+                contentColor = Color.Black,
                 shape = CircleShape,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -240,7 +240,7 @@ fun ActivityCard(
     val everyoneAgreed = activity.participants.size >= groupSize
     
     val cardColor by animateColorAsState(
-        targetValue = if (isParticipating) accentColor.copy(alpha = 0.15f) else Color.White,
+        targetValue = if (isParticipating) accentColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
         label = "card_color"
     )
 
@@ -256,7 +256,7 @@ fun ActivityCard(
                     Text(
                         activity.title, 
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("€", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.Gray)
@@ -315,10 +315,10 @@ fun ActivityCard(
                 if (activity.creatorId == currentUserId) {
                     Row {
                         IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
-                            Icon(Icons.Default.Edit, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
                         }
                         IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                            Icon(Icons.Default.Delete, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -333,8 +333,8 @@ fun ParticipantAvatar(name: String, imageUrl: String?, viewModel: InsiemeViewMod
         modifier = Modifier
             .size(size)
             .clip(CircleShape),
-        color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(2.dp, BackgroundWhite)
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.background)
     ) {
         val decoded = viewModel.decodeImage(imageUrl)
         if (decoded != null) {
@@ -348,7 +348,7 @@ fun ParticipantAvatar(name: String, imageUrl: String?, viewModel: InsiemeViewMod
                     name.take(1).uppercase(), 
                     fontSize = 12.sp, 
                     fontWeight = FontWeight.Bold,
-                    color = TextDark
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -382,12 +382,12 @@ fun DoneActivityCard(activity: Activity, color: Color, onUndo: () -> Unit) {
                 activity.title, 
                 modifier = Modifier.weight(1f), 
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextDark.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             Icon(
                 Icons.Default.Check, 
                 null, 
-                tint = TextDark.copy(alpha = 0.2f), 
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), 
                 modifier = Modifier.size(18.dp)
             )
         }

@@ -76,7 +76,7 @@ fun WishlistScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundWhite)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Decorative background elements
         DuckIcon(modifier = Modifier.size(110.dp).align(Alignment.TopEnd).offset(x = 20.dp, y = 80.dp).alpha(0.1f))
         FlowerIcon(modifier = Modifier.size(90.dp).align(Alignment.BottomStart).offset(x = (-20).dp, y = 20.dp), color = SoftBlue.copy(alpha = 0.2f))
@@ -90,12 +90,12 @@ fun WishlistScreen(
                     Text(
                         "Lista dei Desideri", 
                         style = MaterialTheme.typography.headlineMedium,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         "Cosa sogniamo di fare?", 
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDark.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                 }
                 Box(
@@ -104,7 +104,7 @@ fun WishlistScreen(
                         .background(primaryColor.copy(alpha = 0.3f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Star, null, tint = TextDark, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.Star, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
                 }
             }
 
@@ -137,7 +137,7 @@ fun WishlistScreen(
                                 Text(
                                     when(id) { "Tutti" -> "Tutti"; userId -> "Miei"; else -> idToName[id] ?: "Utente" }, 
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (isSelected) TextDark else TextDark.copy(alpha = 0.4f)
+                                    color = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                                 ) 
                             }
                         )
@@ -157,7 +157,7 @@ fun WishlistScreen(
                     if (filteredItems.isEmpty()) { 
                         item(span = { GridItemSpan(2) }) { 
                             Box(modifier = Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) { 
-                                Text("Nessun desiderio ancora...", style = MaterialTheme.typography.bodyMedium, color = TextDark.copy(alpha = 0.3f)) 
+                                Text("Nessun desiderio ancora...", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)) 
                             } 
                         } 
                     }
@@ -178,7 +178,7 @@ fun WishlistScreen(
             FloatingActionButton(
                 onClick = { showCreateDialog = true }, 
                 containerColor = primaryColor, 
-                contentColor = TextDark, 
+                contentColor = Color.Black, 
                 shape = CircleShape, 
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -215,7 +215,7 @@ fun WishlistCard(
                 } else if (!item.imageUrl.isNullOrBlank()) { onZoom() } 
             }, 
         shape = MaterialTheme.shapes.large, 
-        colors = CardDefaults.cardColors(containerColor = Color.White), 
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), 
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column {
@@ -235,8 +235,8 @@ fun WishlistCard(
                 Surface(
                     modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).size(28.dp), 
                     shape = CircleShape, 
-                    border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
-                    color = Color.White
+                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.surface),
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     val decoded = viewModel.decodeImage(ownerImage)
                     if (decoded != null) { 
@@ -246,7 +246,7 @@ fun WishlistCard(
                             modifier = Modifier.fillMaxSize().background(accentColor.copy(alpha = 0.2f)), 
                             contentAlignment = Alignment.Center
                         ) { 
-                            Text(ownerName.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextDark) 
+                            Text(ownerName.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) 
                         } 
                     }
                 }
@@ -257,12 +257,12 @@ fun WishlistCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Box(
-                            modifier = Modifier.size(28.dp).background(Color.White.copy(alpha = 0.8f), CircleShape).clickable { onEdit() },
+                            modifier = Modifier.size(28.dp).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape).clickable { onEdit() },
                             contentAlignment = Alignment.Center
-                        ) { Icon(Icons.Default.Edit, null, tint = TextDark, modifier = Modifier.size(14.dp)) }
+                        ) { Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp)) }
                         
                         Box(
-                            modifier = Modifier.size(28.dp).background(Color.White.copy(alpha = 0.8f), CircleShape).clickable { onDelete() },
+                            modifier = Modifier.size(28.dp).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape).clickable { onDelete() },
                             contentAlignment = Alignment.Center
                         ) { Icon(Icons.Default.Delete, null, tint = ErrorRed, modifier = Modifier.size(14.dp)) }
                     }
@@ -275,7 +275,7 @@ fun WishlistCard(
                     fontWeight = FontWeight.Bold, 
                     maxLines = 2, 
                     minLines = 2,
-                    color = TextDark
+                    color = MaterialTheme.colorScheme.onSurface
                 ) 
             }
         }

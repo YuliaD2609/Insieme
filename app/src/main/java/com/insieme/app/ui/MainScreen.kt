@@ -32,29 +32,13 @@ sealed class Screen(
     val route: String, 
     val title: String, 
     val icon: ImageVector, 
-    val color: Color,
-    val bgColor: Color
+    val color: Color
 ) {
-    object Activities : Screen(
-        "activities", "Andiamo!", Icons.Default.Favorite, 
-        PastelGreen, BackgroundWhite
-    )
-    object Media : Screen(
-        "media", "Vedere", Icons.Default.PlayArrow, 
-        SoftMint, BackgroundWhite
-    )
-    object Games : Screen(
-        "games", "Giochi", Icons.Default.Star, 
-        SoftBlue, BackgroundWhite
-    )
-    object Wishlist : Screen(
-        "wishlist", "Desideri", Icons.Default.List, 
-        SoftPink, BackgroundWhite
-    )
-    object Profile : Screen(
-        "profile", "Profilo", Icons.Default.Person, 
-        SoftYellow, BackgroundWhite
-    )
+    object Activities : Screen("activities", "Andiamo!", Icons.Default.Favorite, PastelGreen)
+    object Media : Screen("media", "Vedere", Icons.Default.PlayArrow, SoftMint)
+    object Games : Screen("games", "Giochi", Icons.Default.Star, SoftBlue)
+    object Wishlist : Screen("wishlist", "Desideri", Icons.Default.List, SoftPink)
+    object Profile : Screen("profile", "Profilo", Icons.Default.Person, SoftYellow)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,7 +59,7 @@ fun MainScreen(viewModel: InsiemeViewModel = viewModel()) {
         currentDestination?.hierarchy?.any { it.route == screen.route } == true 
     } ?: Screen.Activities
 
-    val barColor by animateColorAsState(targetValue = currentScreen.bgColor)
+    val barColor by animateColorAsState(targetValue = MaterialTheme.colorScheme.background)
 
     val navigateToProfile = {
         navController.navigate(Screen.Profile.route) {
@@ -113,8 +97,8 @@ fun MainScreen(viewModel: InsiemeViewModel = viewModel()) {
                             selectedIconColor = screen.color,
                             selectedTextColor = screen.color,
                             indicatorColor = screen.color.copy(alpha = 0.15f),
-                            unselectedIconColor = Color.LightGray.copy(alpha = 0.5f),
-                            unselectedTextColor = Color.LightGray.copy(alpha = 0.5f)
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     )
                 }

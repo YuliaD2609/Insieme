@@ -59,7 +59,9 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
         uri?.let { viewModel.setProfileImage(it.toString()) }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundWhite)) {
+    val currentTheme by viewModel.themeMode.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Decorative background elements
         DuckIcon(modifier = Modifier.size(160.dp).align(Alignment.BottomStart).offset(x = (-40).dp, y = 40.dp).alpha(0.08f))
         FlowerIcon(modifier = Modifier.size(100.dp).align(Alignment.TopEnd).offset(x = 20.dp, y = 120.dp), color = SoftPurple.copy(alpha = 0.15f))
@@ -79,12 +81,12 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                             Text(
                                 "Il Tuo Profilo", 
                                 style = MaterialTheme.typography.headlineMedium,
-                                color = TextDark
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                             Text(
                                 "Personalizza la tua esperienza", 
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextDark.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                             )
                         }
                         Box(
@@ -93,7 +95,7 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                                 .background(primaryColor.copy(alpha = 0.3f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Person, null, tint = TextDark, modifier = Modifier.size(28.dp))
+                            Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
                         }
                     }
                 }
@@ -107,8 +109,8 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                                 .size(140.dp)
                                 .clickable { galleryLauncher.launch("image/*") },
                             shape = CircleShape,
-                            color = Color.White,
-                            border = androidx.compose.foundation.BorderStroke(4.dp, primaryColor.copy(alpha = 0.2f)),
+                            color = MaterialTheme.colorScheme.surface,
+                            border = androidx.compose.foundation.BorderStroke(4.dp, primaryColor.copy(alpha = 0.3f)),
                             shadowElevation = 0.dp
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -127,7 +129,7 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                             shadowElevation = 4.dp
                         ) {
                             IconButton(onClick = { galleryLauncher.launch("image/*") }) {
-                                Icon(Icons.Default.Edit, null, tint = TextDark, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
                             }
                         }
                     }
@@ -144,11 +146,17 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                         shape = MaterialTheme.shapes.medium,
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             focusedBorderColor = primaryColor, 
-                            unfocusedBorderColor = TextDark.copy(alpha = 0.1f),
-                            focusedLabelColor = TextDark, 
-                            containerColor = Color.White
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            focusedLabelColor = MaterialTheme.colorScheme.onSurface, 
+                            containerColor = MaterialTheme.colorScheme.surface
                         )
                     )
+                }
+
+                item { Spacer(modifier = Modifier.height(32.dp)) }
+
+                item {
+                    ThemeSelector(currentTheme = currentTheme, onThemeSelected = { viewModel.setThemeMode(it) })
                 }
 
                 item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -167,7 +175,7 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                         Text(
                             "I Tuoi Gruppi", 
                             style = MaterialTheme.typography.titleMedium, 
-                            color = TextDark,
+                            color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -184,7 +192,7 @@ fun ProfileScreen(viewModel: InsiemeViewModel) {
                     Text(
                         "Insieme v1.1.0 • Made with ❤️", 
                         style = MaterialTheme.typography.labelSmall, 
-                        color = TextDark.copy(alpha = 0.3f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
                     )
                 }
             }
@@ -197,8 +205,8 @@ fun GroupListItem(id: String, onSwitch: () -> Unit, onLeave: () -> Unit, accentC
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, TextDark.copy(alpha = 0.05f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -212,13 +220,58 @@ fun GroupListItem(id: String, onSwitch: () -> Unit, onLeave: () -> Unit, accentC
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(id, style = MaterialTheme.typography.bodyMedium, color = TextDark)
+                Text(id, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             }
             IconButton(onClick = onSwitch) {
                 Icon(Icons.Default.Search, null, tint = SoftBlue)
             }
             IconButton(onClick = onLeave) {
-                Icon(Icons.Default.Delete, null, tint = ErrorRed.copy(alpha = 0.5f))
+                Icon(Icons.Default.Delete, null, tint = ErrorRed)
+            }
+        }
+    }
+}
+
+@Composable
+fun ThemeSelector(currentTheme: com.insieme.app.ui.viewmodel.ThemeMode, onThemeSelected: (com.insieme.app.ui.viewmodel.ThemeMode) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Tema", 
+            style = MaterialTheme.typography.titleMedium, 
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            val themes = listOf(
+                Triple(com.insieme.app.ui.viewmodel.ThemeMode.SYSTEM, "Sistema", Icons.Default.Settings),
+                Triple(com.insieme.app.ui.viewmodel.ThemeMode.LIGHT, "Chiaro", Icons.Default.WbSunny),
+                Triple(com.insieme.app.ui.viewmodel.ThemeMode.DARK, "Scuro", Icons.Default.NightsStay)
+            )
+
+            themes.forEach { (mode, label, icon) ->
+                val selected = currentTheme == mode
+                Card(
+                    modifier = Modifier.weight(1f).clickable { onThemeSelected(mode) },
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface,
+                        contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    ),
+                    border = if (selected) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(icon, null, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
     }
@@ -233,19 +286,19 @@ fun JoinCreateSection(viewModel: InsiemeViewModel, accentColor: Color) {
     Card(
         modifier = Modifier.fillMaxWidth(), 
         shape = MaterialTheme.shapes.extraLarge, 
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
-            Text("Entra nel Gruppo", style = MaterialTheme.typography.titleLarge, color = TextDark)
-            Text("Crea un nuovo spazio o usa un codice.", style = MaterialTheme.typography.bodySmall, color = TextDark.copy(alpha = 0.5f))
+            Text("Entra nel Gruppo", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text("Crea un nuovo spazio o usa un codice.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             Spacer(modifier = Modifier.height(24.dp))
             
             Button(
                 onClick = { viewModel.createSpace() }, 
                 modifier = Modifier.fillMaxWidth().height(56.dp), 
                 shape = CircleShape, 
-                colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = TextDark)
+                colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = Color.Black)
             ) { 
                 Text("Crea Nuovo Gruppo", fontWeight = FontWeight.Bold) 
             }
@@ -253,9 +306,9 @@ fun JoinCreateSection(viewModel: InsiemeViewModel, accentColor: Color) {
             Spacer(modifier = Modifier.height(16.dp))
             
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.weight(1f).height(1.dp).background(TextDark.copy(alpha = 0.1f)))
-                Text("OPPURE", modifier = Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall, color = TextDark.copy(alpha = 0.3f))
-                Box(modifier = Modifier.weight(1f).height(1.dp).background(TextDark.copy(alpha = 0.1f)))
+                Box(modifier = Modifier.weight(1f).height(1.dp).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
+                Text("OPPURE", modifier = Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                Box(modifier = Modifier.weight(1f).height(1.dp).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -269,7 +322,8 @@ fun JoinCreateSection(viewModel: InsiemeViewModel, accentColor: Color) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), 
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = accentColor,
-                    unfocusedBorderColor = TextDark.copy(alpha = 0.1f)
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
             
@@ -282,7 +336,7 @@ fun JoinCreateSection(viewModel: InsiemeViewModel, accentColor: Color) {
             TextButton(
                 onClick = { viewModel.joinSpace(inputDigits) }, 
                 modifier = Modifier.fillMaxWidth(), 
-                colors = ButtonDefaults.textButtonColors(contentColor = TextDark)
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
             ) { 
                 Text("Unisciti ora", fontWeight = FontWeight.Bold) 
             }
@@ -296,17 +350,17 @@ fun ActiveGroupSection(viewModel: InsiemeViewModel, spaceId: String, members: Se
     Card(
         modifier = Modifier.fillMaxWidth(), 
         shape = MaterialTheme.shapes.extraLarge, 
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Il Tuo Gruppo", style = MaterialTheme.typography.titleLarge, color = TextDark)
+                Text("Il Tuo Gruppo", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.width(12.dp))
                 Surface(color = accentColor, shape = CircleShape) { 
                     Text(
                         "${members.size}", 
-                        color = TextDark, 
+                        color = Color.Black, 
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), 
                         fontWeight = FontWeight.Bold
@@ -317,7 +371,7 @@ fun ActiveGroupSection(viewModel: InsiemeViewModel, spaceId: String, members: Se
             Spacer(modifier = Modifier.height(24.dp))
             
             Surface(
-                color = BackgroundWhite, 
+                color = MaterialTheme.colorScheme.background, 
                 shape = MaterialTheme.shapes.medium, 
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -326,7 +380,7 @@ fun ActiveGroupSection(viewModel: InsiemeViewModel, spaceId: String, members: Se
                     modifier = Modifier.padding(24.dp), 
                     textAlign = TextAlign.Center, 
                     style = MaterialTheme.typography.headlineLarge,
-                    color = TextDark,
+                    color = MaterialTheme.colorScheme.onBackground,
                     letterSpacing = 4.sp
                 )
             }
@@ -336,7 +390,7 @@ fun ActiveGroupSection(viewModel: InsiemeViewModel, spaceId: String, members: Se
             Text(
                 "Membri: ${members.joinToString(", ")}", 
                 style = MaterialTheme.typography.bodySmall, 
-                color = TextDark.copy(alpha = 0.5f), 
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), 
                 textAlign = TextAlign.Center
             )
             
@@ -354,7 +408,7 @@ fun ActiveGroupSection(viewModel: InsiemeViewModel, spaceId: String, members: Se
                     }, 
                     modifier = Modifier.weight(1f).height(56.dp), 
                     shape = CircleShape, 
-                    colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = TextDark)
+                    colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = Color.Black)
                 ) { 
                     Icon(Icons.Default.Share, null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -363,9 +417,9 @@ fun ActiveGroupSection(viewModel: InsiemeViewModel, spaceId: String, members: Se
                 
                 IconButton(
                     onClick = { viewModel.logout() }, 
-                    modifier = Modifier.size(56.dp).background(BackgroundWhite, CircleShape).border(1.dp, TextDark.copy(alpha = 0.1f), CircleShape)
+                    modifier = Modifier.size(56.dp).background(MaterialTheme.colorScheme.background, CircleShape).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), CircleShape)
                 ) { 
-                    Icon(Icons.Default.Close, null, tint = TextDark.copy(alpha = 0.5f))
+                    Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
 
                 if (isCreator) {
@@ -378,9 +432,9 @@ fun ActiveGroupSection(viewModel: InsiemeViewModel, spaceId: String, members: Se
                 } else {
                     IconButton(
                         onClick = { viewModel.leaveSpace(spaceId) }, 
-                        modifier = Modifier.size(56.dp).background(TextDark.copy(alpha = 0.05f), CircleShape).border(1.dp, TextDark.copy(alpha = 0.1f), CircleShape)
+                        modifier = Modifier.size(56.dp).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), CircleShape).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), CircleShape)
                     ) { 
-                        Icon(Icons.Default.Delete, null, tint = TextDark.copy(alpha = 0.3f))
+                        Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     }
                 }
             }

@@ -35,7 +35,7 @@ fun WishlistDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.extraLarge,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             tonalElevation = 8.dp
         ) {
@@ -47,7 +47,7 @@ fun WishlistDialog(
                 Text(
                     if (item == null) "Nuovo Sogno ✨" else "Modifica Desiderio",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = TextDark
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -55,7 +55,7 @@ fun WishlistDialog(
                 Text(
                     "Aggiungi qualcosa che ti piacerebbe!",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextDark.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -68,8 +68,8 @@ fun WishlistDialog(
                     shape = CircleShape,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = primaryColor,
-                        unfocusedBorderColor = TextDark.copy(alpha = 0.1f),
-                        focusedLabelColor = TextDark
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        focusedLabelColor = MaterialTheme.colorScheme.onSurface
                     ),
                     singleLine = true
                 )
@@ -85,8 +85,8 @@ fun WishlistDialog(
                     shape = CircleShape,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = primaryColor,
-                        unfocusedBorderColor = TextDark.copy(alpha = 0.1f),
-                        focusedLabelColor = TextDark
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        focusedLabelColor = MaterialTheme.colorScheme.onSurface
                     ),
                     singleLine = true
                 )
@@ -101,7 +101,7 @@ fun WishlistDialog(
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = TextDark)
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = Color.Black)
                 ) {
                     Text("Salva nei Sogni", fontWeight = FontWeight.Bold)
                 }
@@ -109,7 +109,7 @@ fun WishlistDialog(
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    colors = ButtonDefaults.textButtonColors(contentColor = TextDark.copy(alpha = 0.4f))
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 ) {
                     Text("Annulla")
                 }

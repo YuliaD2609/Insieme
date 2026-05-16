@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.ui.graphics.luminance
 
 private val LightColorScheme = lightColorScheme(
     primary = PastelGreen,
@@ -25,7 +27,22 @@ private val LightColorScheme = lightColorScheme(
     onBackground = TextDark,
     onSurface = TextDark,
     tertiary = AccentOrange,
-    surfaceVariant = SoftMint
+    surfaceVariant = SoftMint,
+    onSurfaceVariant = TextDark
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = PastelGreen,
+    secondary = SoftBlue,
+    background = BackgroundDark,
+    surface = SurfaceDark,
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onBackground = TextLight,
+    onSurface = TextLight,
+    tertiary = AccentOrange,
+    surfaceVariant = DarkMint,
+    onSurfaceVariant = TextLight
 )
 
 val BubbleShapes = Shapes(
@@ -41,32 +58,27 @@ val InsiemeTypography = Typography(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 30.sp,
-        color = TextDark,
         letterSpacing = (-1).sp
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        color = TextDark
+        fontSize = 22.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        color = TextDark
+        fontSize = 18.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        color = TextDark.copy(alpha = 0.9f)
+        fontSize = 16.sp
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
-        fontSize = 13.sp,
-        color = TextDark.copy(alpha = 0.7f)
+        fontSize = 13.sp
     )
 )
 
@@ -75,8 +87,10 @@ fun InsiemeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = colorScheme,
         typography = InsiemeTypography,
         shapes = BubbleShapes,
         content = content

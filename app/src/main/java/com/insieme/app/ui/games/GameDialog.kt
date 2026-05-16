@@ -37,7 +37,7 @@ fun GameDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.extraLarge,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             tonalElevation = 8.dp
         ) {
@@ -49,7 +49,7 @@ fun GameDialog(
                 Text(
                     if (item == null) "Nuovo Gioco 🎮" else "Modifica Gioco",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = TextDark
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -57,7 +57,7 @@ fun GameDialog(
                 Text(
                     "Date un nome alla vostra prossima sfida!",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextDark.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -70,8 +70,8 @@ fun GameDialog(
                     shape = CircleShape,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = primaryColor,
-                        unfocusedBorderColor = TextDark.copy(alpha = 0.1f),
-                        focusedLabelColor = TextDark
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        focusedLabelColor = MaterialTheme.colorScheme.onSurface
                     ),
                     singleLine = true
                 )
@@ -89,11 +89,11 @@ fun GameDialog(
                                 .weight(1f)
                                 .height(48.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) primaryColor else BackgroundWhite)
+                                .background(if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant)
                                 .clickable { isOwned = owned }
                                 .border(
                                     1.dp, 
-                                    if (isSelected) primaryColor else TextDark.copy(alpha = 0.1f), 
+                                    if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), 
                                     CircleShape
                                 ),
                             contentAlignment = Alignment.Center
@@ -101,7 +101,7 @@ fun GameDialog(
                             Text(
                                 if (!owned) "Non abbiamo" else "Abbiamo",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) TextDark else TextDark.copy(alpha = 0.6f)
+                                color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                         }
                     }
@@ -117,7 +117,7 @@ fun GameDialog(
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = TextDark)
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = Color.Black)
                 ) {
                     Text("Conferma", fontWeight = FontWeight.Bold)
                 }
@@ -125,7 +125,7 @@ fun GameDialog(
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    colors = ButtonDefaults.textButtonColors(contentColor = TextDark.copy(alpha = 0.4f))
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 ) {
                     Text("Annulla")
                 }

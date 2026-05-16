@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream
 import java.util.UUID
 
 enum class SortOrder { DEFAULT, COST, DURATION }
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 class InsiemeViewModel(application: Application) : AndroidViewModel(application) {
     private val db = Firebase.firestore.apply {
@@ -63,6 +64,9 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
 
     private val _sortOrder = MutableStateFlow(SortOrder.DEFAULT)
     val sortOrder: StateFlow<SortOrder> = _sortOrder
+
+    private val _themeMode = MutableStateFlow(ThemeMode.valueOf(prefs.getString("theme_mode", ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name))
+    val themeMode: StateFlow<ThemeMode> = _themeMode
 
     private val _joinedGroups = MutableStateFlow<Set<String>>(
         prefs.getStringSet("joined_groups", emptySet()) ?: emptySet()
@@ -315,6 +319,11 @@ class InsiemeViewModel(application: Application) : AndroidViewModel(application)
 
     fun clearError() { _errorMessage.value = null }
     fun setSortOrder(order: SortOrder) { _sortOrder.value = order }
+    
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        prefs.edit().putString("theme_mode", mode.name).apply()
+    }
 
     // Activities
     fun addActivity(activity: Activity) { viewModelScope.launch { repository?.addActivity(activity.copy(creatorId = _userId.value)) } }

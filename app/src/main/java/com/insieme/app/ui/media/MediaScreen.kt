@@ -63,7 +63,7 @@ fun MediaScreen(
         MediaDialog(item = itemToEdit, onDismiss = { itemToEdit = null }, onSave = { viewModel.updateMediaItem(it); itemToEdit = null })
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundWhite)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Decorative background elements
         DuckIcon(modifier = Modifier.size(100.dp).align(Alignment.TopStart).offset(x = (-30).dp, y = (-20).dp).alpha(0.08f))
         FlowerIcon(modifier = Modifier.size(120.dp).align(Alignment.BottomEnd).offset(x = 30.dp, y = 40.dp), color = SoftPink.copy(alpha = 0.15f))
@@ -77,12 +77,12 @@ fun MediaScreen(
                     Text(
                         "Cosa vediamo?", 
                         style = MaterialTheme.typography.headlineMedium,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         "Cinema e Serie TV insieme", 
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDark.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                 }
                 Box(
@@ -91,7 +91,7 @@ fun MediaScreen(
                         .background(primaryColor.copy(alpha = 0.3f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.PlayArrow, null, tint = TextDark, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.PlayArrow, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
                 }
             }
 
@@ -132,7 +132,7 @@ fun MediaScreen(
                             Text(
                                 "Visti & Apprezzati", 
                                 style = MaterialTheme.typography.titleLarge,
-                                color = TextDark.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                             )
                         }
                         item {
@@ -153,7 +153,7 @@ fun MediaScreen(
             FloatingActionButton(
                 onClick = { showCreateDialog = true }, 
                 containerColor = primaryColor, 
-                contentColor = TextDark, 
+                contentColor = Color.Black, 
                 shape = CircleShape, 
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -198,7 +198,7 @@ fun MediaCard(
     val everyoneAgreed = item.participants.size >= groupSize
     
     val cardColor by animateColorAsState(
-        targetValue = if (isParticipating) accentColor.copy(alpha = 0.2f) else Color.White,
+        targetValue = if (isParticipating) accentColor.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface,
         label = "card_color"
     )
 
@@ -214,18 +214,18 @@ fun MediaCard(
                     Text(
                         item.title, 
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Surface(
-                        color = if (isParticipating) Color.White.copy(alpha = 0.5f) else accentColor.copy(alpha = 0.1f), 
+                        color = if (isParticipating) MaterialTheme.colorScheme.surface.copy(alpha = 0.5f) else accentColor.copy(alpha = 0.1f), 
                         shape = CircleShape
                     ) { 
                         Text(
                             if (item.type == MediaType.FILM) "Film" else "Serie TV", 
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), 
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextDark.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         ) 
                     }
                 }
@@ -247,7 +247,7 @@ fun MediaCard(
                         Icon(
                             if (isParticipating) Icons.Default.ThumbUp else Icons.Default.ThumbUpOffAlt, 
                             null, 
-                            tint = if (isParticipating) TextDark else accentColor,
+                            tint = if (isParticipating) MaterialTheme.colorScheme.onSurface else accentColor,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -263,10 +263,10 @@ fun MediaCard(
                 if (item.creatorId == currentUserId) {
                     Row {
                         IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) { 
-                            Icon(Icons.Default.Edit, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
+                            Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
                         }
                         IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) { 
-                            Icon(Icons.Default.Delete, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
+                            Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
                         }
                     }
                 }
@@ -295,9 +295,9 @@ fun DoneMediaCard(item: MediaItem, color: Color, onUndo: () -> Unit) {
                 item.title, 
                 modifier = Modifier.weight(1f), 
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextDark.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
-            Icon(Icons.Default.History, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.History, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
         }
     }
 }

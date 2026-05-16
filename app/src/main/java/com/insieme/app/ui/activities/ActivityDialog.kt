@@ -38,7 +38,7 @@ fun ActivityDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Column(
@@ -72,7 +72,7 @@ fun ActivityDialog(
                         onClick = { isAtHome = true },
                         label = { Text("In casa") },
                         modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.White)
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.Black)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     FilterChip(
@@ -80,7 +80,7 @@ fun ActivityDialog(
                         onClick = { isAtHome = false },
                         label = { Text("Fuori") },
                         modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.White)
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.Black)
                     )
                 }
 
@@ -120,7 +120,7 @@ fun ActivityDialog(
                             selected = time == t,
                             onClick = { time = t },
                             label = { Text(t) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.White)
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.Black)
                         )
                     }
                 }
@@ -161,7 +161,7 @@ fun ActivityDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = deepGreen)
+                    colors = ButtonDefaults.buttonColors(containerColor = deepGreen, contentColor = Color.Black)
                 ) {
                     Text("Salva", fontWeight = FontWeight.Bold)
                 }

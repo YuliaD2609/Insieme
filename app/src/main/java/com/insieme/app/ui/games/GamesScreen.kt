@@ -62,7 +62,7 @@ fun GamesScreen(
         GameDialog(item = itemToEdit, onDismiss = { itemToEdit = null }, onSave = { viewModel.updateGame(it); itemToEdit = null })
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundWhite)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Decorative background elements
         DuckIcon(modifier = Modifier.size(140.dp).align(Alignment.BottomEnd).offset(x = 20.dp, y = 30.dp).alpha(0.1f))
         FlowerIcon(modifier = Modifier.size(60.dp).align(Alignment.TopStart).offset(x = (-10).dp, y = 100.dp), color = SoftYellow.copy(alpha = 0.2f))
@@ -76,12 +76,12 @@ fun GamesScreen(
                     Text(
                         "A cosa giochiamo?", 
                         style = MaterialTheme.typography.headlineMedium,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         "Scegli una nuova sfida!", 
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextDark.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                 }
                 Box(
@@ -131,7 +131,7 @@ fun GamesScreen(
                             Text(
                                 "Galleria dei Campioni", 
                                 style = MaterialTheme.typography.titleLarge,
-                                color = TextDark.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                             )
                         }
                         item {
@@ -152,7 +152,7 @@ fun GamesScreen(
             FloatingActionButton(
                 onClick = { showCreateDialog = true }, 
                 containerColor = primaryColor, 
-                contentColor = TextDark, 
+                contentColor = Color.Black, 
                 shape = CircleShape, 
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -197,7 +197,7 @@ fun GameCard(
     val everyoneAgreed = item.participants.size >= groupSize
     
     val cardColor by animateColorAsState(
-        targetValue = if (isParticipating) accentColor.copy(alpha = 0.15f) else Color.White,
+        targetValue = if (isParticipating) accentColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
         label = "card_color"
     )
 
@@ -213,18 +213,18 @@ fun GameCard(
                     Text(
                         item.title, 
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TextDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Surface(
-                        color = if (isParticipating) Color.White.copy(alpha = 0.5f) else accentColor.copy(alpha = 0.1f), 
+                        color = if (isParticipating) MaterialTheme.colorScheme.surface.copy(alpha = 0.5f) else accentColor.copy(alpha = 0.1f), 
                         shape = CircleShape
                     ) { 
                         Text(
                             if (!item.isOwned) "Non abbiamo" else "Abbiamo", 
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), 
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextDark.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         ) 
                     }
                 }
@@ -239,13 +239,13 @@ fun GameCard(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(if (isParticipating) accentColor else Color.White)
+                            .background(if (isParticipating) accentColor else MaterialTheme.colorScheme.surface)
                             .border(2.dp, accentColor, CircleShape)
                             .clickable { onVote() },
                         contentAlignment = Alignment.Center
                     ) {
                         if (isParticipating) {
-                            Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -260,10 +260,10 @@ fun GameCard(
                 if (item.creatorId == currentUserId) {
                     Row {
                         IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) { 
-                            Icon(Icons.Default.Edit, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
+                            Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
                         }
                         IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) { 
-                            Icon(Icons.Default.Delete, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
+                            Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
                         }
                     }
                 }
@@ -292,9 +292,9 @@ fun DoneGameCard(item: GameItem, color: Color, onUndo: () -> Unit) {
                 item.title, 
                 modifier = Modifier.weight(1f), 
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextDark.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
-            Icon(Icons.Default.Refresh, null, tint = TextDark.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp))
         }
     }
 }
