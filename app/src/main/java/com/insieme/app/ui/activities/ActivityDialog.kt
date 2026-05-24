@@ -1,13 +1,20 @@
 package com.insieme.app.ui.activities
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -15,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.insieme.app.data.model.Activity
+import com.insieme.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,56 +40,76 @@ fun ActivityDialog(
     
     var error by remember { mutableStateOf<String?>(null) }
 
-    val pastelGreen = Color(0xFFE8F5E9)
-    val deepGreen = Color(0xFFA5D6A7)
+    val primaryColor = PastelGreen
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(28.dp),
+            shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            tonalElevation = 8.dp
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(32.dp)
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
                     if (activity == null) "Nuova Attività" else "Modifica Attività",
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = deepGreen
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    "Crea una nuova attività da fare insieme!",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it; error = null },
                     label = { Text("Cosa facciamo?") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = deepGreen, focusedLabelColor = deepGreen)
+                    shape = CircleShape,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = primaryColor, focusedLabelColor = MaterialTheme.colorScheme.onSurface),
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    FilterChip(
-                        selected = isAtHome,
-                        onClick = { isAtHome = true },
-                        label = { Text("In casa") },
-                        modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.Black)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    FilterChip(
-                        selected = !isAtHome,
-                        onClick = { isAtHome = false },
-                        label = { Text("Fuori") },
-                        modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.Black)
-                    )
+                    listOf(true, false).forEach { atHome ->
+                        val isSelected = isAtHome == atHome
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.Transparent)
+                                .clickable { isAtHome = atHome }
+                                .border(
+                                    if (isSelected) 2.dp else 1.dp,
+                                    if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                if (atHome) "In casa" else "Fuori",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                        if (atHome) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
                 }
 
                 if (!isAtHome) {
@@ -91,8 +119,9 @@ fun ActivityDialog(
                         onValueChange = { locationDetail = it; error = null },
                         label = { Text("Dove? (es: Roma, Parco...)") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = deepGreen, focusedLabelColor = deepGreen)
+                        shape = CircleShape,
+                        colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = primaryColor, focusedLabelColor = MaterialTheme.colorScheme.onSurface),
+                        singleLine = true
                     )
                 }
 
@@ -107,21 +136,38 @@ fun ActivityDialog(
                     },
                     label = { Text("Budget stimato (€)") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = CircleShape,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = deepGreen, focusedLabelColor = deepGreen)
+                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = primaryColor, focusedLabelColor = MaterialTheme.colorScheme.onSurface),
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Durata", style = MaterialTheme.typography.labelLarge, color = deepGreen, fontWeight = FontWeight.Bold)
+                Text("Durata", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("Breve", "Media", "Lunga").forEach { t ->
-                        FilterChip(
-                            selected = time == t,
-                            onClick = { time = t },
-                            label = { Text(t) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = deepGreen, selectedLabelColor = Color.Black)
-                        )
+                        val isSelected = time == t
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.Transparent)
+                                .clickable { time = t }
+                                .border(
+                                    if (isSelected) 2.dp else 1.dp,
+                                    if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                t,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
                     }
                 }
 
@@ -131,15 +177,15 @@ fun ActivityDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
+                OutlinedButton(
                     onClick = {
                         if (title.isBlank()) {
                             error = "Inserisci un titolo!"
-                            return@Button
+                            return@OutlinedButton
                         }
                         if (!isAtHome && locationDetail.isBlank()) {
                             error = "Specifica un luogo per le attività fuori!"
-                            return@Button
+                            return@OutlinedButton
                         }
                         onSave(
                             activity?.copy(
@@ -159,11 +205,20 @@ fun ActivityDialog(
                             )
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = deepGreen, contentColor = Color.Black)
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = CircleShape,
+                    border = BorderStroke(2.dp, primaryColor),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
                     Text("Salva", fontWeight = FontWeight.Bold)
+                }
+                
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                ) {
+                    Text("Annulla")
                 }
             }
         }

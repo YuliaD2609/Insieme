@@ -1,5 +1,6 @@
 package com.insieme.app.ui.wishlist
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -93,7 +94,7 @@ fun WishlistDialog(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Button(
+                OutlinedButton(
                     onClick = {
                         if (title.isNotBlank() || link.isNotBlank()) {
                             onSave(title, link)
@@ -101,7 +102,8 @@ fun WishlistDialog(
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = Color.Black)
+                    border = BorderStroke(2.dp, primaryColor),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
                     Text("Salva nei Sogni", fontWeight = FontWeight.Bold)
                 }

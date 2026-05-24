@@ -251,7 +251,6 @@ fun WishlistCard(
                     }
                 }
 
-                if (item.ownerId == currentUserId) {
                     Row(
                         modifier = Modifier.align(Alignment.TopEnd).padding(8.dp), 
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -266,7 +265,6 @@ fun WishlistCard(
                             contentAlignment = Alignment.Center
                         ) { Icon(Icons.Default.Delete, null, tint = ErrorRed, modifier = Modifier.size(14.dp)) }
                     }
-                }
             }
             Column(modifier = Modifier.padding(16.dp)) { 
                 Text(

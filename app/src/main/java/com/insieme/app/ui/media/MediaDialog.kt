@@ -1,5 +1,6 @@
 package com.insieme.app.ui.media
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -90,10 +91,10 @@ fun MediaDialog(
                                 .weight(1f)
                                 .height(48.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant)
+                                .background(Color.Transparent)
                                 .clickable { selectedType = type }
                                 .border(
-                                    1.dp, 
+                                    if (isSelected) 2.dp else 1.dp, 
                                     if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), 
                                     CircleShape
                                 ),
@@ -102,7 +103,8 @@ fun MediaDialog(
                             Text(
                                 if (type == MediaType.FILM) "Film" else "Serie TV",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
                     }
@@ -110,7 +112,7 @@ fun MediaDialog(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Button(
+                OutlinedButton(
                     onClick = {
                         if (title.isNotBlank()) {
                             onSave(item?.copy(title = title, type = selectedType) ?: MediaItem(title = title, type = selectedType))
@@ -118,7 +120,8 @@ fun MediaDialog(
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = Color.Black)
+                    border = BorderStroke(2.dp, primaryColor),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
                     Text("Conferma", fontWeight = FontWeight.Bold)
                 }

@@ -1,5 +1,6 @@
 package com.insieme.app.ui.games
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -89,10 +90,10 @@ fun GameDialog(
                                 .weight(1f)
                                 .height(48.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant)
+                                .background(Color.Transparent)
                                 .clickable { isOwned = owned }
                                 .border(
-                                    1.dp, 
+                                    if (isSelected) 2.dp else 1.dp, 
                                     if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), 
                                     CircleShape
                                 ),
@@ -101,7 +102,8 @@ fun GameDialog(
                             Text(
                                 if (!owned) "Non abbiamo" else "Abbiamo",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
                     }
@@ -109,7 +111,7 @@ fun GameDialog(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Button(
+                OutlinedButton(
                     onClick = {
                         if (title.isNotBlank()) {
                             onSave(item?.copy(title = title, isOwned = isOwned) ?: GameItem(title = title, isOwned = isOwned))
@@ -117,7 +119,8 @@ fun GameDialog(
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = Color.Black)
+                    border = BorderStroke(2.dp, primaryColor),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
                     Text("Conferma", fontWeight = FontWeight.Bold)
                 }

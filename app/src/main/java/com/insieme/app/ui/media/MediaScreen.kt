@@ -260,7 +260,6 @@ fun MediaCard(
                         ParticipantAvatar(idToName[id] ?: "Utente", userImages[id], viewModel = viewModel) 
                     }
                 }
-                if (item.creatorId == currentUserId) {
                     Row {
                         IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) { 
                             Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
@@ -269,7 +268,6 @@ fun MediaCard(
                             Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(18.dp)) 
                         }
                     }
-                }
             }
         }
     }
